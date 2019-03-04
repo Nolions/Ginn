@@ -63,6 +63,12 @@ public class MainViewModel extends ViewModel {
         }
     }
 
+    public void onClickBoomActionButton() {
+        Log.d(TAG, "onclick BoomActionButton...");
+
+
+    }
+
     public void onChangedPowerOnSwitch(Boolean isChecked) {
         Log.d(TAG, "on change PowerOnSwitch...");
         Log.d(TAG, "PowerOnSwitch status is " + isChecked);
@@ -79,7 +85,6 @@ public class MainViewModel extends ViewModel {
         }
 
         this.mNowStoveTemp = temp;
-//        this.setMNowStoveTemp(temp);
     }
 
     private void lessTemp() {
