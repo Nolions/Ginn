@@ -1,5 +1,7 @@
 package tw.nolions.coffeebeanslife.fragment;
 
+//import android.arch.lifecycle.ViewModelProvider;
+import android.arch.lifecycle.ViewModelProviders;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -7,22 +9,24 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import tw.nolions.coffeebeanslife.viewModel.mainViewModel;
-//import tw.nolions.coffeebeanslife.databinding.Fragment.
+
+import androidx.annotation.Nullable;
+import tw.nolions.coffeebeanslife.databinding.FragmentMainBinding;
 
 import com.github.mikephil.charting.charts.LineChart;
 
 import tw.nolions.coffeebeanslife.R;
+import tw.nolions.coffeebeanslife.viewmodel.MainViewModel;
 
 public class MainFragment extends Fragment {
 
     private TextView mTempBeans, mTempStove, mTempEnvironment;
     private LineChart mChart;
 
-//    private mainViewModel mViewModel;
-//    private Main binding ;
+    private MainViewModel mMainViewModel;
+    private FragmentMainBinding mBinding;
 
-    //private MainFragmentBinding binding ;
+
     public static MainFragment newInstance() {
         return new MainFragment();
     }
@@ -34,17 +38,21 @@ public class MainFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-//        mBinding = DataBindingUtil.inflate(inflater, R.layout.fragment_main, container, false);
-//
-//        View view = mBinding.getRoot();
+        mBinding = DataBindingUtil.inflate(inflater, R.layout.fragment_main, container, false);
 
-        View v = inflater.inflate(R.layout.fragment_main, container, false);
+        View v = mBinding.getRoot();
+//        View v = inflater.inflate(R.layout.fragment_main, container, false);
 
-//        mTempBeans = (TextView) v.findViewById(R.id.temp_beans);
-//        mTempStove = (TextView) v.findViewById(R.id.temp_stove);
-//        mTempEnvironment = (TextView) v.findViewById(R.id.temp_environment);
-//        mChart = (LineChart) v.findViewById(R.id.chart);
 
         return v;
+    }
+
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
+//        mMainViewModel = ViewModelProviders.of(this).get(MainViewModel.class);
+        mMainViewModel = new MainViewModel(getActivity());
+        mBinding.setMainViewModel(mMainViewModel);
     }
 }
