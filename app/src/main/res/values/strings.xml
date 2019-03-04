@@ -1,10 +1,10 @@
 <resources>
     <string name="app_name">Coffee Beans Life</string>
 
-    <string name="temp_beans">豆溫:</string>
-    <string name="temp_stove">爐溫:</string>
-    <string name="temp_environment">環溫:</string>
-    <string name="temp_icon_describe">爐溫Icon</string>
+    <string name="temp_beans_label">豆溫:</string>
+    <string name="temp_stove_label">爐溫:</string>
+    <string name="temp_environment_label">環溫:</string>
+    <string name="temp_icon">爐溫Icon</string>
     <string name="todo">TODO</string>
 
     <string name="power_on">On</string>
