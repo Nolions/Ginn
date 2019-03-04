@@ -134,6 +134,7 @@ obj/
 
 # User-specific configurations
 .idea/caches/
+.idea/markdown-navigator/
 .idea/libraries/
 .idea/shelf/
 .idea/.name
