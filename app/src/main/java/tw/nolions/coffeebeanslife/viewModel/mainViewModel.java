@@ -13,7 +13,7 @@ public class MainViewModel extends ViewModel {
     private final float TEMP_RANGE = 5;
 
     public final ObservableField<String> mBeansTemp, mStoveTemp, mEnvironmentTemp;
-    public final ObservableBoolean isPOwerOn, isImport;
+    public final ObservableBoolean isPowerOn, isImport;
 
     private Context mContext;
 
@@ -27,7 +27,7 @@ public class MainViewModel extends ViewModel {
         mStoveTemp = new ObservableField<>();
         mEnvironmentTemp = new ObservableField<>();
 
-        isPOwerOn = new ObservableBoolean(false);
+        isPowerOn = new ObservableBoolean(false);
         isImport = new ObservableBoolean(true);
     }
 
@@ -40,21 +40,21 @@ public class MainViewModel extends ViewModel {
     }
 
     public void onClickTempPlusActionButton() {
-        Log.e(TAG, "onclick TempPlusActionButton...");
+        Log.d(TAG, "onclick TempPlusActionButton...");
 
         this.addTemp();
         this.setStoveTemp();
     }
 
     public void onClickTempLessActionButton() {
-        Log.e(TAG, "onclick TempLessActionButton...");
+        Log.d(TAG, "onclick TempLessActionButton...");
 
         this.lessTemp();
         this.setStoveTemp();
     }
 
     public void onClickBeanImportActionButton() {
-        Log.e(TAG, "onclick BeanImportActionButton...");
+        Log.d(TAG, "onclick BeanImportActionButton...");
 
         if (isImport.get() == true) {
             isImport.set(false);
@@ -63,24 +63,34 @@ public class MainViewModel extends ViewModel {
         }
     }
 
+    public void onChangedPowerOnSwitch(Boolean isChecked) {
+        Log.d(TAG, "on change PowerOnSwitch...");
+        Log.d(TAG, "PowerOnSwitch status is " + isChecked);
+
+        isPowerOn.set(isChecked);
+    }
+
     private void addTemp() {
-        float temp = this.getmNowStoveTemp();
+        float temp = this.mNowStoveTemp;
+                //this.getmNowStoveTemp();
 
         if (temp <= 95) {
             temp = temp + TEMP_RANGE;
         }
 
-        this.setMNowStoveTemp(temp);
+        this.mNowStoveTemp = temp;
+//        this.setMNowStoveTemp(temp);
     }
 
     private void lessTemp() {
-        float temp = this.getmNowStoveTemp();
+        float temp = this.mNowStoveTemp;
+                //this.getmNowStoveTemp();
 
         if (temp >= 5) {
             temp = temp - TEMP_RANGE;
         }
 
-        this.setMNowStoveTemp(temp);
+        this.mNowStoveTemp = temp;
     }
 
     private void setStoveTemp() {

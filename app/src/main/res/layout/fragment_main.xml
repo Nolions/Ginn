@@ -70,14 +70,16 @@
                 android:layout_marginStart="24dp"
                 android:layout_marginLeft="24dp"
                 android:layout_marginTop="32dp"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                android:checked="false"
                 android:scaleX="2"
                 android:scaleY="2"
                 android:showText="true"
                 android:textOff="@string/power_on"
                 android:textOn="@string/power_off"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                tools:targetApi="lollipop" />
+                android:onCheckedChanged="@{(button, bool) -> mainViewModel.onChangedPowerOnSwitch(bool)}"
+                tools:targetApi="lollipop"/>
 
             <android.support.design.widget.FloatingActionButton
                 android:id="@+id/bean_import_ActionButton"
@@ -129,7 +131,7 @@
                 android:layout_marginEnd="10dp"
                 android:layout_marginRight="10dp"
                 android:layout_marginBottom="120dp"
-                android:clickable="true"
+                android:clickable="@{mainViewModel.isPowerOn ? true : false}"
                 android:focusable="true"
                 android:onClick="@{() -> mainViewModel.onClickTempPlusActionButton()}"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -143,7 +145,7 @@
                 android:layout_marginEnd="10dp"
                 android:layout_marginRight="10dp"
                 android:layout_marginBottom="56dp"
-                android:clickable="true"
+                android:clickable="@{mainViewModel.isPowerOn ? true : false}"
                 android:focusable="true"
                 android:onClick="@{()->mainViewModel.onClickTempLessActionButton()}"
                 app:layout_constraintBottom_toBottomOf="parent"
