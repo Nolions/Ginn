@@ -72,17 +72,24 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
+            <com.github.mikephil.charting.charts.LineChart
+                android:id="@+id/lineChart"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="visible"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
             <Switch
                 android:id="@+id/power_on_Switch"
                 android:layout_width="65dp"
                 android:layout_height="58dp"
-                android:layout_marginStart="10dp"
-                android:layout_marginLeft="10dp"
                 android:layout_marginTop="8dp"
+                android:layout_marginStart="10dp"
                 android:checked="false"
                 android:onCheckedChanged="@{(button, bool) -> mainViewModel.onChangedPowerOnSwitch(bool)}"
-                android:scaleX="2"
-                android:scaleY="2"
+                android:scaleX="1.5"
+                android:scaleY="1.5"
                 android:showText="true"
                 android:textOff="@string/power_on"
                 android:textOn="@string/power_off"
@@ -94,53 +101,56 @@
                 android:id="@+id/floatingActionButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:layout_marginLeft="10dp"
+                android:layout_marginStart="8dp"
                 android:layout_marginBottom="140dp"
+                android:alpha="0.5"
                 android:clickable="@{mainViewModel.isImport ? true : false}"
                 android:focusable="true"
                 android:onClick="@{() -> mainViewModel.onClickBoomActionButton()}"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:srcCompat="@drawable/fire64x64" />
+                app:srcCompat="@drawable/fire64x64"
+                app:fabSize="mini"/>
 
             <android.support.design.widget.FloatingActionButton
                 android:id="@+id/bean_import_ActionButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:layout_marginLeft="10dp"
                 android:layout_marginBottom="60dp"
-                android:clickable="true"
+                android:layout_marginStart="10dp"
+                android:alpha="0.6"
+                android:clickable="@{mainViewModel.isPowerOn ? true : false}"
                 android:focusable="true"
                 android:onClick="@{() -> mainViewModel.onClickBeanImportActionButton()}"
                 android:visibility="@{mainViewModel.isImport ? View.VISIBLE : View.GONE}"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:srcCompat="@drawable/import_64x64" />
+                app:srcCompat="@drawable/import_64x64"
+                app:fabSize="mini"/>
 
             <android.support.design.widget.FloatingActionButton
                 android:id="@+id/bean_export_ActionButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="10dp"
-                android:layout_marginLeft="10dp"
-                android:layout_marginBottom="56dp"
-                android:clickable="true"
+                android:layout_marginBottom="60dp"
+                android:alpha="0.6"
+                android:clickable="@{mainViewModel.isPowerOn ? true : false}"
                 android:focusable="true"
                 android:onClick="@{() -> mainViewModel.onClickBeanImportActionButton()}"
                 android:visibility="@{mainViewModel.isImport ? View.GONE : View.VISIBLE}"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:srcCompat="@drawable/export_64x64" />
+                app:srcCompat="@drawable/export_64x64"
+                app:fabSize="mini"/>
 
 
             <ImageView
                 android:id="@+id/imageView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:layout_marginEnd="8dp"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginEnd="5dp"
                 android:contentDescription="@string/temp_icon"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
@@ -150,35 +160,32 @@
                 android:id="@+id/temp_plus_ActionButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="10dp"
+                android:layout_marginEnd="5dp"
                 android:layout_marginBottom="120dp"
+                android:alpha="0.6"
                 android:clickable="@{mainViewModel.isPowerOn ? true : false}"
                 android:focusable="true"
                 android:onClick="@{() -> mainViewModel.onClickTempPlusActionButton()}"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:srcCompat="@android:drawable/arrow_up_float" />
+                app:srcCompat="@android:drawable/arrow_up_float"
+                app:fabSize="mini"/>
 
             <android.support.design.widget.FloatingActionButton
                 android:id="@+id/temp_less_ActionButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="10dp"
+                android:layout_marginEnd="5dp"
                 android:layout_marginBottom="56dp"
+                android:alpha="0.6"
                 android:clickable="@{mainViewModel.isPowerOn ? true : false}"
                 android:focusable="true"
                 android:onClick="@{()->mainViewModel.onClickTempLessActionButton()}"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:srcCompat="@android:drawable/arrow_down_float" />
+                app:srcCompat="@android:drawable/arrow_down_float"
+                app:fabSize="mini"/>
 
-            <com.github.mikephil.charting.charts.LineChart
-                android:id="@+id/chart"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:visibility="visible"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
 
         </android.support.constraint.ConstraintLayout>
 
