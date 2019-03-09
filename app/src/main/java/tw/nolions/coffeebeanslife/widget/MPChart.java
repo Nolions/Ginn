@@ -16,6 +16,9 @@ import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.github.mikephil.charting.listener.OnChartValueSelectedListener;
 import com.github.mikephil.charting.utils.ColorTemplate;
 
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+
 public class MPChart implements OnChartValueSelectedListener {
 
     private int[] mColors = new int[]{
@@ -24,9 +27,13 @@ public class MPChart implements OnChartValueSelectedListener {
     };
 
     private LineChart mLineChart;
+    private String[] mDataSetNames;
+    private String mDescribe;
 
-    public MPChart(LineChart lineChart) {
+    public MPChart(LineChart lineChart, String describe, String[] names) {
         this.mLineChart = lineChart;
+        this.mDataSetNames = names;
+        this.mDescribe = describe;
     }
 
     @Override
@@ -43,7 +50,7 @@ public class MPChart implements OnChartValueSelectedListener {
 
         this.mLineChart.setOnChartValueSelectedListener(this);
 
-        this.description();
+        this.description(this.mDescribe);
         this.border();
         this.touchGestures();
         this.xAxis();
@@ -51,12 +58,10 @@ public class MPChart implements OnChartValueSelectedListener {
 
 
         this.refresh();
-
-
     }
 
-    public void description() {
-        this.mLineChart.setNoDataText("No chart data available. Use the menu to add entries and data sets!");
+    public void description(String describe) {
+        this.mLineChart.setNoDataText(describe);
 
         Description description = new Description();
         description.setTextColor(ColorTemplate.VORDIPLOM_COLORS[2]); description.setText("Chart Data");
@@ -90,8 +95,8 @@ public class MPChart implements OnChartValueSelectedListener {
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.enableGridDashedLine(10f, 10f, 0f);
         xAxis.setAxisMinimum(0);
-        xAxis.setGranularityEnabled(true);    //粒度
-        xAxis.setGranularity(1f);    //缩放的时候有用，比如放大的时候，我不想把横轴的月份再细分
+        xAxis.setGranularityEnabled(true);
+        xAxis.setGranularity(1f);
 
         // TODO
         // format XAxis Value
@@ -114,14 +119,11 @@ public class MPChart implements OnChartValueSelectedListener {
         this.mLineChart.getAxisRight().setEnabled(false);
     }
 
-    private LineDataSet initLineDataSet(String name) {
+    private LineDataSet initLineDataSet(String name, ArrayList<Entry> entries) {
         //        int color = mColors[count % mColors.length];
-        LineDataSet set = new LineDataSet(null, "name");
+        LineDataSet set = new LineDataSet(entries, name);
 //        set.setLineWidth(2.5f);
 //        set.setCircleRadius(4.5f);
-//        set.setColor(Color.rgb(240, 99, 99));
-//        set.setCircleColor(Color.rgb(240, 99, 99));
-//        set.setHighLightColor(Color.rgb(190, 190, 190));
 //        set.setAxisDependency(YAxis.AxisDependency.LEFT);
 //        set.setValueTextSize(10f);
 
@@ -129,7 +131,7 @@ public class MPChart implements OnChartValueSelectedListener {
         set.setCircleColor(Color.parseColor("#5abdfc"));
         set.setHighLightColor(Color.parseColor("#5abdfc"));
         set.setValueTextSize(10f);
-//        set.setDrawValues(false);    //节点不显示具体数值
+//        set.setDrawValues(false);
         set.setValueTextColor(Color.parseColor("#5abdfc"));
         set.enableDashedHighlightLine(10f, 5f, 0f);
         set.setDrawFilled(true);
@@ -149,7 +151,7 @@ public class MPChart implements OnChartValueSelectedListener {
         this.mLineChart.notifyDataSetChanged();
     }
 
-    public void addEntry(String name, int lineIndex, float value) {
+    public void addEntry(int lineIndex, float value) {
         LineData data = this.mLineChart.getLineData();
 
         if (data == null) {
@@ -159,12 +161,15 @@ public class MPChart implements OnChartValueSelectedListener {
 
         ILineDataSet set = data.getDataSetByIndex(lineIndex);
         if (set == null) {
-            set = this.initLineDataSet(name);
+            ArrayList<Entry> entries = new ArrayList<>();
+            entries.add(new Entry(0, 0));
+
+            String name =  (String) Array.get(mDataSetNames, lineIndex);
+            set = this.initLineDataSet(name, entries);
             data.addDataSet(set);
         }
 
         // choose a random dataSet
-        // TODO
         int randomDataSetIndex = (int) (Math.random() * data.getDataSetCount());
         ILineDataSet randomSet = data.getDataSetByIndex(randomDataSetIndex);
 

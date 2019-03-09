@@ -55,12 +55,17 @@ public class MainFragment extends Fragment {
         mMainViewModel = new MainViewModel(getActivity());
         mBinding.setMainViewModel(mMainViewModel);
 
-        MPChart chart = new MPChart(mLineChart);
+        String[] names = new String[]{
+                "testData"
+        };
+
+        String description = "No chart data available. Use the menu to add entries and data sets!";
+        MPChart chart = new MPChart(mLineChart, description, names);
         chart.init();
 
-        float value = (float) (Math.random() * 50) + 1;
-        chart.addEntry("testData",0,0);
-        chart.addEntry("testData",0, value);
-
+        float value = 7;
+        chart.addEntry(0, value);
+        chart.addEntry(0, 2);
+        chart.addEntry(0, 22);
     }
 }
