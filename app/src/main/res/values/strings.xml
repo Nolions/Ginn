@@ -12,9 +12,15 @@
 
     <string name="power_on">On</string>
     <string name="power_off">off</string>
+    
+    <string name="device">裝置</string>
 
-    <!-- menu -->
+
     <string name="menu_main_conn">連接裝置</string>
     <string name="menu_main_record">查看紀錄</string>
     <string name="menu_main_exit">離開APP</string>
+
+    <string name="search">搜尋</string>
+
+    <string name="noSupportBluetooth">該裝置不支援藍芽裝置</string>
 </resources>

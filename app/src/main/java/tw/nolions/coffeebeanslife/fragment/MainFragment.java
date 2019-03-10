@@ -122,7 +122,5 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
         }
         return false;
     }
-//
-//
-//    @
 }
+
