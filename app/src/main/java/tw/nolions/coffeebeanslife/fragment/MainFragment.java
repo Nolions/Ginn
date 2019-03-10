@@ -7,6 +7,7 @@ import android.databinding.DataBindingUtil;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -90,6 +91,9 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
     public boolean onOptionsItemSelected(MenuItem menuItem) {
         Log.e(TAG, "onClick menu item");
         switch (menuItem.getItemId()) {
+            case R.id.action_conn:
+                Fragment mToFragment = new DeviceFragment();
+                this.swithcFragment(mToFragment);
             case R.id.action_record:
                 Log.e(TAG, "onClick Record menu item");
                 break;
@@ -121,6 +125,13 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
                 break;
         }
         return false;
+    }
+
+    private void swithcFragment(Fragment fragment) {
+        FragmentTransaction transaction = getFragmentManager().beginTransaction();
+        transaction.replace(R.id.container, fragment);
+        transaction.addToBackStack(fragment.getClass().getName());
+        transaction.commit();
     }
 }
 
