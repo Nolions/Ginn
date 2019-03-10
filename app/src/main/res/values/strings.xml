@@ -1,15 +1,20 @@
 <resources>
+    <!--app information-->
     <string name="app_name">Coffee Beans Life</string>
 
+    <!-- temp label -->
     <string name="temp_beans_label">豆溫:</string>
     <string name="temp_stove_label">爐溫:</string>
     <string name="temp_environment_label">環溫:</string>
+    <string name="tempUnit">°C</string>
+
     <string name="temp_icon">爐溫Icon</string>
-    <string name="todo">TODO</string>
 
     <string name="power_on">On</string>
     <string name="power_off">off</string>
 
-
-    <string name="tempUnit">°C</string>
+    <!-- menu -->
+    <string name="menu_main_conn">連接裝置</string>
+    <string name="menu_main_record">查看紀錄</string>
+    <string name="menu_main_exit">離開APP</string>
 </resources>
