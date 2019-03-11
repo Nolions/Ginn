@@ -2,10 +2,13 @@ package tw.nolions.coffeebeanslife.fragment;
 
 import android.app.AlertDialog;
 import android.arch.lifecycle.ViewModelProviders;
+import android.bluetooth.BluetoothAdapter;
 import android.content.DialogInterface;
 import android.databinding.DataBindingUtil;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.widget.Toolbar;
@@ -16,6 +19,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import tw.nolions.coffeebeanslife.MainActivity;
@@ -23,7 +27,10 @@ import tw.nolions.coffeebeanslife.databinding.FragmentMainBinding;
 
 import com.github.mikephil.charting.charts.LineChart;
 
+import java.util.UUID;
+
 import tw.nolions.coffeebeanslife.R;
+import tw.nolions.coffeebeanslife.service.BluetoothAcceptService;
 import tw.nolions.coffeebeanslife.viewmodel.MainViewModel;
 import tw.nolions.coffeebeanslife.widget.MPChart;
 
@@ -33,6 +40,8 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
 
     private MainViewModel mMainViewModel;
     private FragmentMainBinding mBinding;
+
+    public Handler mHandler;
 
     public static MainFragment newInstance() {
         return new MainFragment();
@@ -57,6 +66,33 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
         setHasOptionsMenu(true);
 
         return v;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        Handler handler = new Handler(){
+            @Override
+            public void handleMessage(Message msg) {
+                super.handleMessage(msg);
+                Toast.makeText(getContext(), (String) msg.obj, Toast.LENGTH_LONG).show();
+            }
+        };
+
+        BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
+
+        BluetoothAcceptService BLEAccept =  null;
+        if (BLEAccept == null) {
+            BLEAccept = new BluetoothAcceptService(mBluetoothAdapter, handler);
+        }
+
+        UUID deviceUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+//
+        BLEAccept.conn("Samsung Galaxy S7 edge", deviceUUID);
+//        BLEAccept.run();
+        BLEAccept.start();
     }
 
     @Override
