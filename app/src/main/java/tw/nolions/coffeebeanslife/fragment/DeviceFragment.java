@@ -13,28 +13,25 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
+import android.widget.AdapterView;
 import android.widget.BaseAdapter;
-import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
 
-import java.util.ArrayList;
 import java.util.Set;
 
 import tw.nolions.coffeebeanslife.MainActivity;
 import tw.nolions.coffeebeanslife.R;
+import tw.nolions.coffeebeanslife.model.DeviceModel;
+import tw.nolions.coffeebeanslife.widget.BluetoothDeviceAdapter;
 
-public class DeviceFragment extends Fragment {
+public class DeviceFragment extends Fragment{
 
-//    UI
     private Toolbar mToolBar;
     private ListView mDeviceListView;
 
-//    Data
     private String TAG;
-    private ArrayList<String> mDevices;
-    private ListAdapter mDeviceListAdapter;
+    private BluetoothDeviceAdapter mDeviceListAdapter;
     private BluetoothAdapter mBluetoothAdapter;
     private Set<BluetoothDevice> mPairedDevices;
 
@@ -46,14 +43,10 @@ public class DeviceFragment extends Fragment {
         super.onCreate(savedInstanceState);
 
         TAG = getResources().getString(R.string.app_name);
-        mDevices = new ArrayList();
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-//        mBinding = DataBindingUtil.inflate(inflater, R.layout.fragment_main, container, false);
-//        View v = mBinding.getRoot();
-
         View v = inflater.inflate(R.layout.fragment_device_list, container, false);
 
         mToolBar = (Toolbar) v.findViewById(R.id.device_list_toolbar);
@@ -78,23 +71,42 @@ public class DeviceFragment extends Fragment {
         inflater.inflate(R.menu.menu_device_list, menu);
     }
 
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        Log.d(TAG, "toolbar menu click...");
+        switch(item.getItemId()) {
+            case android.R.id.home:
+                Log.d(TAG, "Back pressure fragment");
+                getFragmentManager().popBackStack();
+                return true;
+            case R.id.bluetooth_search:
+                Log.d(TAG, "on click toolbar's bluetooth search button...");
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+
     private void setToolBar() {
         ((MainActivity) getActivity()).setSupportActionBar(mToolBar);
         ((MainActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         ((MainActivity) getActivity()).getSupportActionBar().setHomeButtonEnabled(true);
 
         setHasOptionsMenu(true);
-
-//        toolbar.inflateMenu(R.menu.base_toolbar_menu);
     }
 
     private void setListView() {
-        mDeviceListAdapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_1, mDevices);
+        mDeviceListAdapter = new BluetoothDeviceAdapter(getContext());
         mDeviceListView.setAdapter(mDeviceListAdapter);
+        mDeviceListView.setOnItemClickListener(listener);
 
-//        mDevices.add("lv2410");
-//        ((BaseAdapter) mDeviceListAdapter) .notifyDataSetChanged();
     }
+
+    private ListView.OnItemClickListener listener = new ListView.OnItemClickListener(){
+        @Override
+        public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
+            Log.d(TAG, "item :" + arg2);
+        }
+    };
 
     private void setBluetooth() {
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
@@ -119,24 +131,9 @@ public class DeviceFragment extends Fragment {
         mPairedDevices = mBluetoothAdapter.getBondedDevices();
 
         for(BluetoothDevice device : mPairedDevices) {
-            mDevices.add(device.getName());
+            mDeviceListAdapter.addItem(new DeviceModel(device.getName(), device.getAddress()));
         }
 
         this.changeDeviceList();
-    }
-
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        Log.d(TAG, "toolbar menu click...");
-        switch(item.getItemId()) {
-            case android.R.id.home:
-                Log.d(TAG, "Back pressure fragment");
-                getFragmentManager().popBackStack();
-                return true;
-            case R.id.bluetooth_search:
-                Log.d(TAG, "on click toolbar's bluetooth seaach button...");
-        }
-        return super.onOptionsItemSelected(item);
     }
 }
