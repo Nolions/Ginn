@@ -51,6 +51,10 @@ public class BluetoothDeviceAdapter extends BaseAdapter {
         return v;
     }
 
+    public void clearnItem() {
+        this.mDeviceList.clear();
+    }
+
     public void addItem(DeviceModel model) {
         this.mDeviceList.add(model);
     }

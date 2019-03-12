@@ -156,6 +156,7 @@ public class DeviceFragment extends Fragment{
     private void  getPairedDevices() {
         mPairedDevices = mBluetoothAdapter.getBondedDevices();
 
+        mDeviceListAdapter.clearnItem();
         for(BluetoothDevice device : mPairedDevices) {
             mDeviceListAdapter.addItem(new DeviceModel(device.getName(), device.getAddress()));
         }
@@ -170,8 +171,8 @@ public class DeviceFragment extends Fragment{
                 @Override
                 public void run() {
                     mScanning = false;
-                    getPairedDevices();
                     getActivity().invalidateOptionsMenu();
+                    getPairedDevices();
                 }
             }, SCAN_PERIOD);
             mScanning = true;
