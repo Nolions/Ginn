@@ -10,7 +10,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:title="@string/device"
-        android:background="@color/colorPrimary" />
+        app:theme="@style/AppTheme.Toolbar"
+        app:titleTextAppearance="@style/AppTheme.Toolbar.Title"/>
+
 
     <ListView
         android:id="@+id/device_ListView"
