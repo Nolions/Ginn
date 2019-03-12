@@ -16,6 +16,7 @@
     <string name="device">裝置</string>
 
     <string name="noSupportBluetooth">該裝置不支援藍芽裝置</string>
+
     <!-- Menu items -->
 
     <string name="menu_main_conn">連接裝置</string>

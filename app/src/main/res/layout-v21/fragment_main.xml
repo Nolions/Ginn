@@ -22,7 +22,9 @@
             android:layout_height="wrap_content"
             android:background="@color/colorPrimary"
             android:minHeight="?attr/actionBarSize"
-            android:theme="?attr/actionBarTheme" />
+            app:theme="@style/AppTheme.Toolbar"
+            app:popupTheme="@style/AppTheme.Toolbar.popup"
+            app:titleTextAppearance="@style/AppTheme.Toolbar.Title"/>
 
         <LinearLayout
             android:layout_width="match_parent"

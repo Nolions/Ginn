@@ -23,6 +23,7 @@
             android:background="@color/colorPrimary"
             android:minHeight="?attr/actionBarSize"
             app:theme="@style/AppTheme.Toolbar"
+            app:popupTheme="@style/AppTheme.Toolbar.popup"
             app:titleTextAppearance="@style/AppTheme.Toolbar.Title"/>
 
         <LinearLayout
