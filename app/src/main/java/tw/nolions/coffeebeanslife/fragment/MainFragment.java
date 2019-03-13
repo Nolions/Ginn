@@ -1,14 +1,14 @@
 package tw.nolions.coffeebeanslife.fragment;
 
 import android.app.AlertDialog;
-import android.arch.lifecycle.ViewModelProviders;
 import android.bluetooth.BluetoothAdapter;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.databinding.DataBindingUtil;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.widget.Toolbar;
@@ -31,6 +31,7 @@ import java.util.UUID;
 
 import tw.nolions.coffeebeanslife.R;
 import tw.nolions.coffeebeanslife.service.BluetoothAcceptService;
+import tw.nolions.coffeebeanslife.service.BluetoothSingleton;
 import tw.nolions.coffeebeanslife.viewmodel.MainViewModel;
 import tw.nolions.coffeebeanslife.widget.MPChart;
 
@@ -41,8 +42,12 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
     private MainViewModel mMainViewModel;
     private FragmentMainBinding mBinding;
 
+    private BluetoothAcceptService mBluetoothAcceptService;
+    private MPChart mChart;
+
     public Handler mHandler;
 
+    @NonNull
     public static MainFragment newInstance() {
         return new MainFragment();
     }
@@ -52,6 +57,14 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
         super.onCreate(savedInstanceState);
 
         TAG = getResources().getString(R.string.app_name);
+
+        if (BluetoothSingleton.getInstance().getBluetoothAdapter() == null) {
+            Toast.makeText(getContext(), getResources().getString(R.string.noSupportBluetooth), Toast.LENGTH_LONG).show();
+        }
+
+        if (mBluetoothAcceptService == null) {
+            mBluetoothAcceptService = new BluetoothAcceptService(BluetoothSingleton.getInstance().getBluetoothAdapter(), mHandler);
+        }
     }
 
     @Override
@@ -76,30 +89,36 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
             @Override
             public void handleMessage(Message msg) {
                 super.handleMessage(msg);
-                Toast.makeText(getContext(), (String) msg.obj, Toast.LENGTH_LONG).show();
+                String value = (String) msg.obj;
+                Toast.makeText(getContext(), value, Toast.LENGTH_LONG).show();
+
+
+                if (value.matches("[-+]?[0-9]*\\.?[0-9]+")) {
+
+                }
+
+
+                mChart.addEntry(0, 1);
             }
         };
 
-        BluetoothAdapter mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-
-
-        BluetoothAcceptService BLEAccept =  null;
-        if (BLEAccept == null) {
-            BLEAccept = new BluetoothAcceptService(mBluetoothAdapter, handler);
+        if (!BluetoothSingleton.getInstance().getBluetoothAdapter().isEnabled()) {
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            startActivityForResult(enableBtIntent, BluetoothAcceptService.REQUEST_ENABLE_BT);
         }
 
+
         UUID deviceUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
-//
-        BLEAccept.conn("Samsung Galaxy S7 edge", deviceUUID);
-//        BLEAccept.run();
-        BLEAccept.start();
+
+            mBluetoothAcceptService.conn("Samsung Galaxy S7 edge", deviceUUID);
+            mBluetoothAcceptService.start();
+
     }
 
     @Override
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-//        mMainViewModel = ViewModelProviders.of(this).get(MainViewModel.class);
         mMainViewModel = new MainViewModel(getActivity());
         mBinding.setMainViewModel(mMainViewModel);
 
@@ -108,13 +127,12 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
         };
 
         String description = "No chart data available. Use the menu to add entries and data sets!";
-        MPChart chart = new MPChart(mLineChart, description, names);
-        chart.init();
+        mChart = new MPChart(mLineChart, description, names);
+        mChart.init();
 
-        float value = 7;
-        chart.addEntry(0, value);
-        chart.addEntry(0, 2);
-        chart.addEntry(0, 22);
+        mChart.addEntry(0, 7);
+        mChart.addEntry(0, 2);
+        mChart.addEntry(0, 22);
     }
 
     @Override
@@ -129,7 +147,7 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
         switch (menuItem.getItemId()) {
             case R.id.action_conn:
                 Fragment mToFragment = new DeviceFragment();
-                this.swithcFragment(mToFragment);
+                this.switchFragment(mToFragment);
             case R.id.action_record:
                 Log.e(TAG, "onClick Record menu item");
                 break;
@@ -160,10 +178,12 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
                 alertDialog.show();
                 break;
         }
+
+        mBluetoothAcceptService.cancel();
         return false;
     }
 
-    private void swithcFragment(Fragment fragment) {
+    private void switchFragment(Fragment fragment) {
         FragmentTransaction transaction = getFragmentManager().beginTransaction();
         transaction.replace(R.id.container, fragment);
         transaction.addToBackStack(fragment.getClass().getName());

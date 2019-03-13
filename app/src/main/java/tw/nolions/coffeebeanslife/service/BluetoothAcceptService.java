@@ -13,28 +13,31 @@ import java.io.InputStream;
 import java.util.UUID;
 
 public class BluetoothAcceptService extends Thread {
+    private final String TAG = "CoffeeBeansLife";
     private BluetoothAdapter mBluetoothAdapter;
 
     private BluetoothServerSocket mServerSocket;
     private BluetoothSocket mSocket;
     private InputStream mInputStream;
-    private Handler mDasbordHandler;
+    private Handler mHandler;
+
+    public final static int REQUEST_ENABLE_BT = 1;
 
     public BluetoothAcceptService(BluetoothAdapter adapter, Handler handler) {
         mBluetoothAdapter = adapter;
 
-        mDasbordHandler = handler;
+        mHandler = handler;
     }
 
     public void conn(String deviceName, UUID deviceUUID) {
         BluetoothServerSocket tmp = null;
         try {
-//            // MY_UUID is the app's UUID string, also used by the client code
+            // MY_UUID is the app's UUID string, also used by the client code
             tmp = mBluetoothAdapter.listenUsingRfcommWithServiceRecord(deviceName, deviceUUID);
         } catch (IOException IOE) {
-            Log.e("Coffee Beans Life", IOE.getMessage());
+            Log.e(TAG, IOE.getMessage());
         } catch (Exception e) {
-            Log.e("Coffee Beans Life", e.getMessage());
+            Log.e(TAG, e.getMessage());
         }
 
         mServerSocket = tmp;
@@ -45,28 +48,30 @@ public class BluetoothAcceptService extends Thread {
             mSocket = mServerSocket.accept();
             mInputStream = mSocket.getInputStream();
             this.receive();
-        } catch (IOException e) {
-//            Log.d(TAG, "Error: " + e.getMessage());
+        } catch (IOException ioe) {
+            Log.e(TAG, "Error: " + ioe.getMessage());
+        } catch (Exception e) {
+            Log.e(TAG, "Error: " + e.getMessage());
         }
     }
-
-
 
     private void receive() {
         // Keep listening until exception occurs or a socket is returned
         while (true) {
-//            Log.d(TAG, "readData");
             try {
                 byte[] buffer = new byte[128];
                 int count = mInputStream.read(buffer);
                 Message msg = new Message();
                 msg.obj = new String(buffer, 0, count, "utf-8");
-//                Log.d(TAG, (String) msg.obj);
-//                .sendMessage(msg);
+                Log.d("Coffee Beans Life", (String) msg.obj);
+                mHandler.sendMessage(msg);
 
-            } catch (IOException e) {
-//                Log.d(TAG, "Error: " + e.getMessage());
-                break;
+            } catch (IOException ioe) {
+                Log.e(TAG, "Error: " + ioe.getMessage());
+                continue;
+            } catch (Exception e) {
+                Log.e(TAG, "Error: " + e.getMessage());
+                continue;
             }
         }
     }
@@ -78,8 +83,11 @@ public class BluetoothAcceptService extends Thread {
     public void cancel() {
         try {
             mServerSocket.close();
-        } catch (IOException e) {
+        } catch (IOException ioe) {
+            Log.e(TAG, "Error: " + ioe.getMessage());
 
+        } catch (Exception e) {
+            Log.e(TAG, "Error: " + e.getMessage());
         }
     }
 }

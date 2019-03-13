@@ -24,6 +24,7 @@ import java.util.Set;
 import tw.nolions.coffeebeanslife.MainActivity;
 import tw.nolions.coffeebeanslife.R;
 import tw.nolions.coffeebeanslife.model.DeviceModel;
+import tw.nolions.coffeebeanslife.service.BluetoothSingleton;
 import tw.nolions.coffeebeanslife.widget.BluetoothDeviceAdapter;
 
 public class DeviceFragment extends Fragment{
@@ -49,6 +50,8 @@ public class DeviceFragment extends Fragment{
 
         TAG = getResources().getString(R.string.app_name);
         mHandler = new Handler();
+
+        BluetoothSingleton.getInstance().getBluetoothAdapter();
     }
 
     @Override
