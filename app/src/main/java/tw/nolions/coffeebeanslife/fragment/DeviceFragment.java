@@ -19,14 +19,13 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.BaseAdapter;
 import android.widget.ListView;
 
+import java.util.ArrayList;
 import java.util.Set;
 
 import tw.nolions.coffeebeanslife.MainActivity;
 import tw.nolions.coffeebeanslife.R;
-import tw.nolions.coffeebeanslife.model.DeviceModel;
 import tw.nolions.coffeebeanslife.service.BluetoothSingleton;
 import tw.nolions.coffeebeanslife.widget.BluetoothDeviceAdapter;
 
@@ -44,6 +43,8 @@ public class DeviceFragment extends Fragment{
 
     private Handler mHandler;
 
+    private ArrayList<BluetoothDevice> mScanDevices;
+
 
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
@@ -53,8 +54,10 @@ public class DeviceFragment extends Fragment{
             {
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 if (device.getBondState() != BluetoothDevice.BOND_BONDED) {
+                    Log.d("TEST", device.getAddress());
 
-                    mDeviceListAdapter.addItem(new DeviceModel("", device.getAddress()));
+//                    mScanDevices.add(device);
+                    mDeviceListAdapter.addItem(BluetoothDeviceAdapter.NoPAIRED_ITEM_TYPE, device);
                     mDeviceListAdapter.notifyDataSetChanged();
                 }
             }
@@ -67,6 +70,7 @@ public class DeviceFragment extends Fragment{
 
         TAG = getResources().getString(R.string.app_name);
         mHandler = new Handler();
+        mScanDevices = new ArrayList<>();
 
         BluetoothSingleton.getInstance().getBluetoothAdapter();
 
@@ -171,23 +175,27 @@ public class DeviceFragment extends Fragment{
 
     private void  getPairedDevices() {
         mPairedDevices = BluetoothSingleton.getInstance().getBluetoothAdapter().getBondedDevices();
-
+        ArrayList<BluetoothDevice> list = new ArrayList<>();
         for(BluetoothDevice device : mPairedDevices) {
-            mDeviceListAdapter.addItem(new DeviceModel(device.getName(), device.getAddress()));
+            list.add(device);
         }
 
-//        ((BaseAdapter) mDeviceListAdapter) .notifyDataSetChanged();
+        mDeviceListAdapter.setData(BluetoothDeviceAdapter.PAIRED_ITEM_TYPE, list);
     }
 
     private void scanDevice(final boolean enable) {
 
         if (enable) {
+            mDeviceListAdapter.clearData(BluetoothDeviceAdapter.PAIRED_ITEM_TYPE);
+            mDeviceListAdapter.clearData(BluetoothDeviceAdapter.NoPAIRED_ITEM_TYPE);
+            getPairedDevices();
+
+            BluetoothSingleton.getInstance().getBluetoothAdapter().startDiscovery();
             mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
                     mScanning = false;
                     getActivity().invalidateOptionsMenu();
-                    BluetoothSingleton.getInstance().getBluetoothAdapter().startDiscovery();
                 }
             }, SCAN_PERIOD);
             mScanning = true;

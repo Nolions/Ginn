@@ -16,6 +16,7 @@
     <string name="device">裝置</string>
 
     <string name="noSupportBluetooth">該裝置不支援藍芽裝置</string>
+    <string name="waitGetDeviceName">裝置連接時將顯示裝置名稱</string>
 
     <!-- Menu items -->
 
