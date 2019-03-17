@@ -46,6 +46,7 @@ public class BluetoothAcceptService extends Thread {
     public void run() {
         try {
             mSocket = mServerSocket.accept();
+            Log.d(TAG, "BlueTooth Socket: " + mSocket);
             mInputStream = mSocket.getInputStream();
             this.receive();
         } catch (IOException ioe) {

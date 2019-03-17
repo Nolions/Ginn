@@ -2,6 +2,8 @@ package tw.nolions.coffeebeanslife.fragment;
 
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.databinding.DataBindingUtil;
@@ -27,6 +29,18 @@ import tw.nolions.coffeebeanslife.databinding.FragmentMainBinding;
 
 import com.github.mikephil.charting.charts.LineChart;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.UUID;
 
 import tw.nolions.coffeebeanslife.R;
@@ -38,14 +52,37 @@ import tw.nolions.coffeebeanslife.widget.MPChart;
 public class MainFragment extends Fragment implements Toolbar.OnCreateContextMenuListener{
     private String TAG;
     private LineChart mLineChart;
+    private Toolbar mToobBar;
 
     private MainViewModel mMainViewModel;
     private FragmentMainBinding mBinding;
 
-    private BluetoothAcceptService mBluetoothAcceptService;
+//    private BluetoothAcceptService mBluetoothAcceptService;
     private MPChart mChart;
 
-    public Handler mHandler;
+    private BluetoothAdapter mBluetoothAdapter= null;
+    private BluetoothDevice mBluetootgDevice = null;
+    private BluetoothSocket mBluetoothSocket = null;
+
+    private OutputStream mOutputStream;
+    private InputStream mInputStream;
+
+    private Handler mHandler = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            String value = (String) msg.obj;
+            Toast.makeText(getContext(), value, Toast.LENGTH_LONG).show();
+
+
+            if (value.matches("[-+]?[0-9]*\\.?[0-9]+")) {
+
+            }
+
+
+            mChart.addEntry(0, 1);
+        }
+    };
 
     @NonNull
     public static MainFragment newInstance() {
@@ -58,13 +95,11 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
 
         TAG = getResources().getString(R.string.app_name);
 
-        if (BluetoothSingleton.getInstance().getBluetoothAdapter() == null) {
+        if (BluetoothSingleton.getInstance().getAdapter() == null) {
             Toast.makeText(getContext(), getResources().getString(R.string.noSupportBluetooth), Toast.LENGTH_LONG).show();
         }
 
-        if (mBluetoothAcceptService == null) {
-            mBluetoothAcceptService = new BluetoothAcceptService(BluetoothSingleton.getInstance().getBluetoothAdapter(), mHandler);
-        }
+
     }
 
     @Override
@@ -74,8 +109,8 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
         View v = mBinding.getRoot();
 
         mLineChart = (LineChart) v.findViewById(R.id.lineChart);
-        Toolbar toobBar = (Toolbar) v.findViewById(R.id.toolbar);
-        ((MainActivity) getActivity()).setSupportActionBar(toobBar);
+        mToobBar = (Toolbar) v.findViewById(R.id.toolbar);
+        ((MainActivity) getActivity()).setSupportActionBar(mToobBar);
         setHasOptionsMenu(true);
 
         return v;
@@ -85,34 +120,30 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
     public void onResume() {
         super.onResume();
 
-        Handler handler = new Handler(){
-            @Override
-            public void handleMessage(Message msg) {
-                super.handleMessage(msg);
-                String value = (String) msg.obj;
-                Toast.makeText(getContext(), value, Toast.LENGTH_LONG).show();
-
-
-                if (value.matches("[-+]?[0-9]*\\.?[0-9]+")) {
-
-                }
-
-
-                mChart.addEntry(0, 1);
-            }
-        };
-
-        if (!BluetoothSingleton.getInstance().getBluetoothAdapter().isEnabled()) {
+        if (!BluetoothSingleton.getInstance().getAdapter().isEnabled()) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, BluetoothAcceptService.REQUEST_ENABLE_BT);
         }
 
+        mBluetootgDevice = BluetoothSingleton.getInstance().getDevic();
+        mBluetoothSocket = BluetoothSingleton.getInstance().getSocket();
 
-        UUID deviceUUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+        if (this.checkBluetoothConn()) {
+            mToobBar.setTitle(getContext().getString(R.string.app_name) +  " " + mBluetootgDevice.getName() + " 連線中...");
+            mChart.description("裝置連線，等待資料中...");
 
-            mBluetoothAcceptService.conn("Samsung Galaxy S7 edge", deviceUUID);
-            mBluetoothAcceptService.start();
+            try {
+                mInputStream = BluetoothSingleton.getInstance().getSocket().getInputStream();
+                this.read();
+            } catch (IOException IOE) {
+                Log.e(TAG, "Error : " + IOE.getMessage());
+            }
 
+
+
+        } else {
+            mChart.description("沒有連線裝置...");
+        }
     }
 
     @Override
@@ -123,16 +154,13 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
         mBinding.setMainViewModel(mMainViewModel);
 
         String[] names = new String[]{
-                "testData"
+                "豆溫"
         };
 
         String description = "No chart data available. Use the menu to add entries and data sets!";
         mChart = new MPChart(mLineChart, description, names);
         mChart.init();
 
-        mChart.addEntry(0, 7);
-        mChart.addEntry(0, 2);
-        mChart.addEntry(0, 22);
     }
 
     @Override
@@ -161,7 +189,6 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
                         .setPositiveButton("Yes",
                                 new DialogInterface.OnClickListener() {
                                     public void onClick(DialogInterface dialog, int id) {
-//                                        moveTaskToBack(true);
                                         android.os.Process.killProcess(android.os.Process.myPid());
                                         System.exit(1);
                                     }
@@ -179,8 +206,16 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
                 break;
         }
 
-        mBluetoothAcceptService.cancel();
         return false;
+    }
+
+    private boolean checkBluetoothConn() {
+        if (mBluetootgDevice == null && mBluetoothSocket == null) {
+            Log.d(TAG, "no device connection");
+            return false;
+        }
+
+        return true;
     }
 
     private void switchFragment(Fragment fragment) {
@@ -188,6 +223,113 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
         transaction.replace(R.id.container, fragment);
         transaction.addToBackStack(fragment.getClass().getName());
         transaction.commit();
+    }
+
+    private void updateUI(HashMap data) {
+        String bean = DecimalPoint(Double.valueOf((String) data.get("bean")));
+        String stove = DecimalPoint(Double.valueOf((String) data.get("stove")));
+        String environment = DecimalPoint(Double.valueOf((String) data.get("environment")));
+
+        this.updateTempLabel(bean, stove, environment);
+        updateTempChart(bean);
+    }
+
+    private void updateTempLabel(String beanTemp, String stoveTemp, String environmentTemp) {
+        mMainViewModel.setBeansTemp(beanTemp);
+        mMainViewModel.setStoveTemp(stoveTemp);
+        mMainViewModel.setEnvironmentTemp(environmentTemp);
+    }
+
+    private void updateTempChart(String data) {
+        mChart.addEntry(0, Float.parseFloat(data));
+    }
+
+    private void read() {
+        Thread t = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    while (true) {
+                        Log.d(TAG, "readData");
+                        try {
+                            byte[] buffer = new byte[128];
+                            int count = mInputStream.read(buffer);
+                            Message msg = new Message();
+                            msg.obj = new String(buffer, 0, count, "utf-8");
+                            Log.d(TAG, (String) msg.obj);
+                            handler.sendMessage(msg);
+                        } catch (IOException e) {
+                            Log.d(TAG, "Error: " + e.getMessage());
+                            break;
+                        }
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "Error: " + e.getMessage());
+                }
+            }
+        });
+
+        t.start();
+    }
+
+    private Handler handler = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+//            Toast.makeText(getContext(), (String) msg.obj, Toast.LENGTH_LONG).show();
+            try {
+                String data = (String) msg.obj;
+                Toast.makeText(getContext(), data, Toast.LENGTH_LONG).show();
+                JSONObject jsonObject = new JSONObject(data);
+
+                HashMap<String, Object>  map = toMap(jsonObject);
+                updateUI(map);
+            } catch (JSONException JSONE) {
+                Log.e(TAG, "error :  " + JSONE.getMessage());
+            }
+
+        }
+    };
+
+    public static HashMap<String, Object> toMap(JSONObject object) throws JSONException {
+        HashMap<String, Object> map = new HashMap<>();
+
+        Iterator<String> keysItr = object.keys();
+        while(keysItr.hasNext()) {
+            String key = keysItr.next();
+            Object value = object.get(key);
+
+            if(value instanceof JSONArray) {
+                value = toList((JSONArray) value);
+            }
+
+            else if(value instanceof JSONObject) {
+                value = toMap((JSONObject) value);
+            }
+            map.put(key, value);
+        }
+        return map;
+    }
+
+    public static ArrayList<Object> toList(JSONArray array) throws JSONException {
+        ArrayList<Object> list = new ArrayList<>();
+        for(int i = 0; i < array.length(); i++) {
+            Object value = array.get(i);
+            if(value instanceof JSONArray) {
+                value = toList((JSONArray) value);
+            }
+
+            else if(value instanceof JSONObject) {
+                value = toMap((JSONObject) value);
+            }
+            list.add(value);
+        }
+        return list;
+    }
+
+    public static String DecimalPoint(Double data) {
+        DecimalFormat df=new DecimalFormat("#.##");
+        return df.format(data);
     }
 }
 

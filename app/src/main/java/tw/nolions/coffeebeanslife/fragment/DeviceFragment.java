@@ -2,12 +2,14 @@ package tw.nolions.coffeebeanslife.fragment;
 
 import android.Manifest;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.Toolbar;
@@ -20,9 +22,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.Toast;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Set;
+import java.util.UUID;
 
 import tw.nolions.coffeebeanslife.MainActivity;
 import tw.nolions.coffeebeanslife.R;
@@ -44,6 +49,14 @@ public class DeviceFragment extends Fragment{
     private Handler mHandler;
 
     private ArrayList<BluetoothDevice> mScanDevices;
+
+    private Handler handler = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            Toast.makeText(getContext(), (String) msg.obj, Toast.LENGTH_LONG).show();
+        }
+    };
 
 
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -72,7 +85,7 @@ public class DeviceFragment extends Fragment{
         mHandler = new Handler();
         mScanDevices = new ArrayList<>();
 
-        BluetoothSingleton.getInstance().getBluetoothAdapter();
+        BluetoothSingleton.getInstance().getAdapter();
 
         int MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION = 1;
         ActivityCompat.requestPermissions(getActivity(),
@@ -126,6 +139,7 @@ public class DeviceFragment extends Fragment{
         switch(item.getItemId()) {
             case android.R.id.home:
                 Log.d(TAG, "Back pressure fragment");
+                this.scanDevice(false);
                 getFragmentManager().popBackStack();
                 return true;
             case R.id.menu_scan:
@@ -156,25 +170,47 @@ public class DeviceFragment extends Fragment{
     }
 
     private void setListView() {
-
-
         mDeviceListAdapter = new BluetoothDeviceAdapter(getContext());
         getPairedDevices();
         mDeviceListView.setAdapter(mDeviceListAdapter);
         mDeviceListView.setOnItemClickListener(listener);
-
     }
 
     private ListView.OnItemClickListener listener = new ListView.OnItemClickListener(){
         @Override
-        public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
-            Log.d(TAG, "item :" + arg2);
+        public void onItemClick(AdapterView<?> arg0, View arg1, int position, long arg3) {
+            Log.d(TAG, "item :" + position);
+            final int p = position;
+            Thread t = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    Message msg = Message.obtain();
+                    UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+                    BluetoothDevice device = mDeviceListAdapter.getDevice(p);
+
+                    try {
+                        BluetoothSocket bluetoothSocket = device.createRfcommSocketToServiceRecord(MY_UUID);
+                        bluetoothSocket.connect();
+                        BluetoothSingleton.getInstance().setSocket(bluetoothSocket);
+                        BluetoothSingleton.getInstance().setDevice(device);
+                        msg.obj = "device " + device.getName() + " Connection success";
+                        handler.sendMessage(msg);
+                    } catch (IOException IOE) {
+                        Log.e(TAG, "error : " + IOE.getMessage());
+                        msg.obj = "device " + device.getName() + " Connection fail";
+                        handler.sendMessage(msg);
+                    }
+                }
+            });
+
+            t.start();
         }
     };
 
 
     private void  getPairedDevices() {
-        mPairedDevices = BluetoothSingleton.getInstance().getBluetoothAdapter().getBondedDevices();
+        mPairedDevices = BluetoothSingleton.getInstance().getAdapter().getBondedDevices();
+        Log.e(TAG, ""+mPairedDevices.size());
         ArrayList<BluetoothDevice> list = new ArrayList<>();
         for(BluetoothDevice device : mPairedDevices) {
             list.add(device);
@@ -186,15 +222,16 @@ public class DeviceFragment extends Fragment{
     private void scanDevice(final boolean enable) {
 
         if (enable) {
-            mDeviceListAdapter.clearData(BluetoothDeviceAdapter.PAIRED_ITEM_TYPE);
-            mDeviceListAdapter.clearData(BluetoothDeviceAdapter.NoPAIRED_ITEM_TYPE);
             getPairedDevices();
+//            mDeviceListAdapter.clearData(BluetoothDeviceAdapter.PAIRED_ITEM_TYPE);
+//            mDeviceListAdapter.clearData(BluetoothDeviceAdapter.NoPAIRED_ITEM_TYPE);
 
-            BluetoothSingleton.getInstance().getBluetoothAdapter().startDiscovery();
+//            BluetoothSingleton.getInstance().getAdapter().startDiscovery();
             mHandler.postDelayed(new Runnable() {
                 @Override
                 public void run() {
                     mScanning = false;
+
                     getActivity().invalidateOptionsMenu();
                 }
             }, SCAN_PERIOD);
@@ -203,5 +240,6 @@ public class DeviceFragment extends Fragment{
             mScanning = false;
         }
         getActivity().invalidateOptionsMenu();
+
     }
 }

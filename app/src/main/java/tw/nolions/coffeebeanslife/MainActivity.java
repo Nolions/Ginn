@@ -37,7 +37,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void init() {
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        BluetoothSingleton.getInstance().setBluetoothAdapter(mBluetoothAdapter);
+        BluetoothSingleton.getInstance().setAdapter(mBluetoothAdapter);
     }
 
     public void setBluetooth() {

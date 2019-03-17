@@ -112,4 +112,8 @@ public class BluetoothDeviceAdapter extends BaseAdapter {
         }
 
     }
+
+    public BluetoothDevice getDevice(int position) {
+        return mPairedDevices.get(position);
+    }
 }
