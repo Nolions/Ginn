@@ -225,23 +225,11 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
         transaction.commit();
     }
 
-    private void updateUI(HashMap data) {
+    private void updateTemp(HashMap data) {
+        mMainViewModel.updateTemp(data);
+
         String bean = DecimalPoint(Double.valueOf((String) data.get("bean")));
-        String stove = DecimalPoint(Double.valueOf((String) data.get("stove")));
-        String environment = DecimalPoint(Double.valueOf((String) data.get("environment")));
-
-        this.updateTempLabel(bean, stove, environment);
-        updateTempChart(bean);
-    }
-
-    private void updateTempLabel(String beanTemp, String stoveTemp, String environmentTemp) {
-        mMainViewModel.setBeansTemp(beanTemp);
-        mMainViewModel.setStoveTemp(stoveTemp);
-        mMainViewModel.setEnvironmentTemp(environmentTemp);
-    }
-
-    private void updateTempChart(String data) {
-        mChart.addEntry(0, Float.parseFloat(data));
+        mChart.addEntry(0, Float.parseFloat(bean));
     }
 
     private void read() {
@@ -282,8 +270,9 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
                 Toast.makeText(getContext(), data, Toast.LENGTH_LONG).show();
                 JSONObject jsonObject = new JSONObject(data);
 
-                HashMap<String, Object>  map = toMap(jsonObject);
-                updateUI(map);
+
+                HashMap<String, Object>  map = tools.Convert.toMap(jsonObject);
+                updateTemp(map);
             } catch (JSONException JSONE) {
                 Log.e(TAG, "error :  " + JSONE.getMessage());
             }
@@ -291,41 +280,6 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
         }
     };
 
-    public static HashMap<String, Object> toMap(JSONObject object) throws JSONException {
-        HashMap<String, Object> map = new HashMap<>();
-
-        Iterator<String> keysItr = object.keys();
-        while(keysItr.hasNext()) {
-            String key = keysItr.next();
-            Object value = object.get(key);
-
-            if(value instanceof JSONArray) {
-                value = toList((JSONArray) value);
-            }
-
-            else if(value instanceof JSONObject) {
-                value = toMap((JSONObject) value);
-            }
-            map.put(key, value);
-        }
-        return map;
-    }
-
-    public static ArrayList<Object> toList(JSONArray array) throws JSONException {
-        ArrayList<Object> list = new ArrayList<>();
-        for(int i = 0; i < array.length(); i++) {
-            Object value = array.get(i);
-            if(value instanceof JSONArray) {
-                value = toList((JSONArray) value);
-            }
-
-            else if(value instanceof JSONObject) {
-                value = toMap((JSONObject) value);
-            }
-            list.add(value);
-        }
-        return list;
-    }
 
     public static String DecimalPoint(Double data) {
         DecimalFormat df=new DecimalFormat("#.##");

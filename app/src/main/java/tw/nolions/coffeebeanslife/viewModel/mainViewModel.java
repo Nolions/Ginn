@@ -6,6 +6,8 @@ import android.databinding.ObservableBoolean;
 import android.databinding.ObservableField;
 import android.util.Log;
 
+import java.util.HashMap;
+
 import tw.nolions.coffeebeanslife.R;
 
 public class MainViewModel extends ViewModel {
@@ -37,6 +39,18 @@ public class MainViewModel extends ViewModel {
 
     public float getmNowStoveTemp() {
         return mNowStoveTemp;
+    }
+
+    public void setBeansTemp(String temp) {
+        this.mBeansTemp.set(temp +  mContext.getResources().getString(R.string.tempUnit));
+    }
+
+    public void setStoveTemp(String temp) {
+        this.mStoveTemp.set(temp +  mContext.getResources().getString(R.string.tempUnit));
+    }
+
+    public void setEnvironmentTemp(String temp) {
+        this.mEnvironmentTemp.set(temp +  mContext.getResources().getString(R.string.tempUnit));
     }
 
     public void onClickTempPlusActionButton() {
@@ -100,5 +114,19 @@ public class MainViewModel extends ViewModel {
 
     private void setStoveTemp() {
         mStoveTemp.set(String.valueOf(this.getmNowStoveTemp() + mContext.getResources().getString(R.string.tempUnit)));
+    }
+
+    public void updateTemp(HashMap data) {
+        String bean = tools.Convert.DecimalPoint(Double.valueOf((String) data.get("bean")));
+        String stove = tools.Convert.DecimalPoint(Double.valueOf((String) data.get("stove")));
+        String environment = tools.Convert.DecimalPoint(Double.valueOf((String) data.get("environment")));
+
+        this.updateTempLabel(bean, stove, environment);
+    }
+
+    public void updateTempLabel(String beanTemp, String stoveTemp, String environmentTemp) {
+        setBeansTemp(beanTemp);
+        setStoveTemp(stoveTemp);
+        setEnvironmentTemp(environmentTemp);
     }
 }
