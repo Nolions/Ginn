@@ -97,7 +97,7 @@ public class DeviceFragment extends Fragment{
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_device_list, container, false);
 
-        mToolBar = (Toolbar) v.findViewById(R.id.device_list_toolbar);
+//        mToolBar = (Toolbar) v.findViewById(R.id.device_list_toolbar);
         mDeviceListView = (ListView) v.findViewById(R.id.device_ListView);
 
         setToolBar();
