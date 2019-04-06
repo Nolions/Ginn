@@ -61,27 +61,28 @@ public class BluetoothDeviceAdapter extends BaseAdapter {
         int itemType = getItemViewType(position);
         View v = this.mInflater.inflate(R.layout.item_device, null);
         TextView nameTextView = (TextView) v.findViewById(R.id.device_name);
-        TextView statusTextView = (TextView) v.findViewById(R.id.device_status);
+        TextView addressTextView = (TextView) v.findViewById(R.id.device_address);
         BluetoothDevice device;
 
         String name = "";
-        String status = "";
+        String address = "";
 
         switch (itemType) {
             case PAIRED_ITEM_TYPE:
                 device = this.mPairedDevices.get(position);
                 name = device.getName();
+                address = device.getAddress();
                 break;
             case NoPAIRED_ITEM_TYPE:
                 device = this.mNoPairedDevices.get(position - mPairedDevices.size());
                 name =  device.getAddress();
 
-                status = "裝置連接時將顯示裝置名稱";
+//                status = "裝置連接時將顯示裝置名稱";
                 break;
         }
 
         nameTextView.setText(name);
-        statusTextView.setText(status);
+        addressTextView.setText(address);
 
         return v;
     }

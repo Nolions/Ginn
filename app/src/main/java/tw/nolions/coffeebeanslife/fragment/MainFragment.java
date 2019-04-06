@@ -64,11 +64,9 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
     private MainViewModel mMainViewModel;
     private FragmentMainBinding mBinding;
 
-//    private BluetoothAcceptService mBluetoothAcceptService;
     private MPChart mChart;
 
 
-    private BluetoothAdapter mBluetoothAdapter= null;
     private BluetoothDevice mBluetootgDevice = null;
     private BluetoothSocket mBluetoothSocket = null;
 
@@ -390,14 +388,27 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
 
                         try {
                             bluetoothSocket.connect();
+                            BluetoothSingleton.getInstance().setSocket(bluetoothSocket);
+                            BluetoothSingleton.getInstance().setDevice(device);
+
                             msg.obj = "device " + device.getName() + " Connection success";
                             handler.sendMessage(msg);
                         } catch (IOException ioe) {
                             try {
                                 bluetoothSocket =(BluetoothSocket) device.getClass().getMethod("createRfcommSocket", new Class[] {int.class}).invoke(device,1);
                                 bluetoothSocket.connect();
+
+                                // TODO
+
+//                                BluetoothSingleton.getInstance().setSocket(bluetoothSocket);
+//                                BluetoothSingleton.getInstance().setDevice(device);
+//                                mBluetootgDevice = BluetoothSingleton.getInstance().getDevic();
+//                                mBluetoothSocket = BluetoothSingleton.getInstance().getSocket();
+                                mInputStream = bluetoothSocket.getInputStream();
+                                mOutputStream = bluetoothSocket.getOutputStream();
+
                                 msg.obj = "device " + device.getName() + " Connection success";
-                        handler.sendMessage(msg);
+                                handler.sendMessage(msg);
                                 Log.e("","Connected");
                             } catch (Exception e) {
                                 Log.e(TAG, "error : " + e.getMessage());
