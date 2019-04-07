@@ -10,12 +10,9 @@ import android.widget.Toast;
 
 import tw.nolions.coffeebeanslife.fragment.MainFragment;
 import tw.nolions.coffeebeanslife.service.BluetoothAcceptService;
-import tw.nolions.coffeebeanslife.service.BluetoothSingleton;
 
 public class MainActivity extends AppCompatActivity {
 
-    static public final String TAG = "CoffeeBeansLife_Android";
-    private BluetoothAdapter mBluetoothAdapter;
     private Bundle mSavedInstanceState;
 
     @Override
@@ -31,15 +28,15 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void init() {
-        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        BluetoothSingleton.getInstance().setAdapter(mBluetoothAdapter);
+        BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        Singleton.getInstance().setBLEAdapter(bluetoothAdapter);
     }
 
     public void setBluetooth() {
-        if (mBluetoothAdapter == null) {
+        if (Singleton.getInstance().getBLEAdapter() == null) {
             Toast.makeText(this, getResources().getString(R.string.noSupportBluetooth), Toast.LENGTH_LONG).show();
         } else {
-            if (!mBluetoothAdapter.isEnabled()) {
+            if (!Singleton.getInstance().getBLEAdapter().isEnabled()) {
                 Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                 startActivityForResult(enableBtIntent, BluetoothAcceptService.REQUEST_ENABLE_BT);
             } else {

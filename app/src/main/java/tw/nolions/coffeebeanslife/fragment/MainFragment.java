@@ -31,7 +31,10 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import tools.Convert;
+import tools.info;
 import tw.nolions.coffeebeanslife.MainActivity;
+import tw.nolions.coffeebeanslife.Singleton;
 import tw.nolions.coffeebeanslife.databinding.FragmentMainBinding;
 
 import com.github.mikephil.charting.charts.LineChart;
@@ -42,59 +45,42 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
-import java.util.UUID;
 
 import tw.nolions.coffeebeanslife.R;
 import tw.nolions.coffeebeanslife.service.BluetoothAcceptService;
-import tw.nolions.coffeebeanslife.service.BluetoothSingleton;
 import tw.nolions.coffeebeanslife.viewmodel.MainViewModel;
 import tw.nolions.coffeebeanslife.widget.BluetoothDeviceAdapter;
 import tw.nolions.coffeebeanslife.widget.MPChart;
 
 public class MainFragment extends Fragment implements Toolbar.OnCreateContextMenuListener{
-    private String TAG;
+    // UI Widget
     private LineChart mLineChart;
-    private Toolbar mToobBar;
+    private Toolbar mToolBar;
+    private ListView mDeviceListView;
+    private AlertDialog alertDialog;
 
-
+    // view model
     private MainViewModel mMainViewModel;
     private FragmentMainBinding mBinding;
 
-    private MPChart mChart;
-
-
-    private BluetoothDevice mBluetootgDevice = null;
-    private BluetoothSocket mBluetoothSocket = null;
-
+    // bluetooth
     private OutputStream mOutputStream;
     private InputStream mInputStream;
 
-    private ArrayList<BluetoothDevice> mDevices;
-
-    private ListView mDeviceListView;
+    // widget
+    private MPChart mChart;
     private BluetoothDeviceAdapter mDeviceListAdapter;
+
+
+    // data
     private Set<BluetoothDevice> mPairedDevices;
 
-    private Handler mHandler = new Handler(){
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            String value = (String) msg.obj;
-            Toast.makeText(getContext(), value, Toast.LENGTH_LONG).show();
-
-
-            if (value.matches("[-+]?[0-9]*\\.?[0-9]+")) {
-
-            }
-
-
-            mChart.addEntry(0, 1);
-        }
-    };
+    // handler
+    private Handler mConnHandler;
+    private Handler mReadHandler;
 
     @NonNull
     public static MainFragment newInstance() {
@@ -104,35 +90,79 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        BluetoothSingleton.getInstance().getAdapter();
 
+        init();
+    }
+
+    private void init() {
         mDeviceListAdapter = new BluetoothDeviceAdapter(getContext());
 
-        TAG = getResources().getString(R.string.app_name);
+        initBluetooth();
 
-        if (BluetoothSingleton.getInstance().getAdapter() == null) {
+        initHandler();
+    }
+
+    private void initBluetooth() {
+        if (Singleton.getInstance().getBLEAdapter() == null) {
             Toast.makeText(getContext(), getResources().getString(R.string.noSupportBluetooth), Toast.LENGTH_LONG).show();
         }
 
-        int MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION = 1;
         ActivityCompat.requestPermissions(getActivity(),
                 new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
-                MY_PERMISSIONS_REQUEST_ACCESS_COARSE_LOCATION);
+                info.PermissionsRequestAccessLocationCode()
+        );
+    }
+
+    private void initHandler() {
+        // handler bluetooth device connection
+        mConnHandler = new Handler(){
+            @Override
+            public void handleMessage(Message msg) {
+                super.handleMessage(msg);
+                String data = (String) msg.obj;
+                Toast.makeText(getContext(), data, Toast.LENGTH_LONG).show();
+                if (checkBluetoothConn()) {
+                    alertDialog.cancel();
+                    BluetoothDevice device = Singleton.getInstance().getBLEDevice();
+                    mToolBar.setTitle(getContext().getString(R.string.app_name) +  " " + device.getName() + " 連線中...");
+                    mChart.description("裝置連線，等待資料中...");
 
 
-        mDevices = new ArrayList<>();
+                    Log.d(info.TAG(), data);
+                    read();
+                } else {
+
+                }
+            }
+        };
+
+        // handler read data form bluetooth device
+        mReadHandler = new Handler() {
+            @Override
+            public void handleMessage(Message msg) {
+                super.handleMessage(msg);
+                try {
+                    String data = (String) msg.obj;
+                    JSONObject jsonObject = new JSONObject(data);
+
+                    HashMap<String, Object>  map = tools.Convert.toMap(jsonObject);
+                    updateTemp(map);
+                } catch (JSONException e) {
+                    Log.e(info.TAG(), "error :  " + e.getMessage());
+                }
+
+            }
+        };
     }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         mBinding = DataBindingUtil.inflate(inflater, R.layout.fragment_main, container, false);
-
         View v = mBinding.getRoot();
 
-
         mLineChart = (LineChart) v.findViewById(R.id.lineChart);
-        mToobBar = (Toolbar) v.findViewById(R.id.toolbar);
-        ((MainActivity) getActivity()).setSupportActionBar(mToobBar);
+        mToolBar = (Toolbar) v.findViewById(R.id.toolbar);
+        ((MainActivity) getActivity()).setSupportActionBar(mToolBar);
         setHasOptionsMenu(true);
 
         return v;
@@ -142,32 +172,12 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
     public void onResume() {
         super.onResume();
 
-        if (!BluetoothSingleton.getInstance().getAdapter().isEnabled()) {
+        if (!Singleton.getInstance().getBLEAdapter().isEnabled()) {
             Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
             startActivityForResult(enableBtIntent, BluetoothAcceptService.REQUEST_ENABLE_BT);
         }
 
-        mBluetootgDevice = BluetoothSingleton.getInstance().getDevic();
-        mBluetoothSocket = BluetoothSingleton.getInstance().getSocket();
-
-        getPairedDevices();
         registerBroadcastReceiver();
-
-//        if (this.checkBluetoothConn()) {
-//            mToobBar.setTitle(getContext().getString(R.string.app_name) +  " " + mBluetootgDevice.getName() + " 連線中...");
-//            mChart.description("裝置連線，等待資料中...");
-//
-//            try {
-//                mInputStream = BluetoothSingleton.getInstance().getSocket().getInputStream();
-//                this.read();
-//            } catch (IOException IOE) {
-//                Log.e(TAG, "Error : " + IOE.getMessage());
-//            }
-//
-//
-//        } else {
-//            mChart.description("沒有連線裝置...");
-//        }
     }
 
     @Override
@@ -195,15 +205,15 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
 
     @Override
     public boolean onOptionsItemSelected(MenuItem menuItem) {
-        Log.e(TAG, "onClick menu item");
+        Log.e(info.TAG(), "onClick menu item");
         switch (menuItem.getItemId()) {
             case R.id.action_conn:
+                getPairedDevices();
                 View view = getLayoutInflater().inflate(R.layout.fragment_device_list, null);
                 mDeviceListView = (ListView) view.findViewById(R.id.device_ListView);
                 mDeviceListView.setAdapter(mDeviceListAdapter);
 
                 mDeviceListView.setOnItemClickListener(listener);
-
 
                 AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
                 builder.setIcon(R.drawable.ic_bluetooth_black_24dp);
@@ -222,36 +232,34 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
                     }
                 });
                 builder.setView(view);
-                builder.show();
+                alertDialog = builder.create();
+                alertDialog.show();
+
                 break;
             case R.id.action_record:
-                Log.e(TAG, "onClick Record menu item");
+                Log.d(info.TAG(), "onClick Record menu item");
                 break;
             case R.id.action_exit:
-                Log.e(TAG, "onClick Record exit item");
-
+                Log.d(info.TAG(), "onClick Record exit item");
 
                 AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getContext());
                 alertDialogBuilder.setTitle("Exit Application?");
-                alertDialogBuilder
-                        .setMessage("Click yes to exit!")
-                        .setCancelable(false)
-                        .setPositiveButton("Yes",
-                                new DialogInterface.OnClickListener() {
-                                    public void onClick(DialogInterface dialog, int id) {
-                                        android.os.Process.killProcess(android.os.Process.myPid());
-                                        System.exit(1);
-                                    }
-                                })
+                alertDialogBuilder.setMessage("Click yes to exit!");
+                alertDialogBuilder.setCancelable(false);
+                alertDialogBuilder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        android.os.Process.killProcess(android.os.Process.myPid());
+                        System.exit(1);
+                    }
+                });
 
-                        .setNegativeButton("No", new DialogInterface.OnClickListener() {
-                            public void onClick(DialogInterface dialog, int id) {
+                alertDialogBuilder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        dialog.cancel();
+                    }
+                });
 
-                                dialog.cancel();
-                            }
-                        });
-
-                AlertDialog alertDialog = alertDialogBuilder.create();
+                alertDialog = alertDialogBuilder.create();
                 alertDialog.show();
                 break;
         }
@@ -260,8 +268,8 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
     }
 
     private boolean checkBluetoothConn() {
-        if (mBluetootgDevice == null && mBluetoothSocket == null) {
-            Log.d(TAG, "no device connection");
+        if (Singleton.getInstance().getBLEDevice() == null && Singleton.getInstance().getBLESocket() == null) {
+            Log.d(info.TAG(), "no device connection");
             return false;
         }
 
@@ -278,62 +286,40 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
     private void updateTemp(HashMap data) {
         mMainViewModel.updateTemp(data);
 
-        String bean = DecimalPoint(Double.valueOf((String) data.get("bean")));
+        String bean = Convert.DecimalPoint(Double.valueOf((String) data.get("bean")));
         mChart.addEntry(0, Float.parseFloat(bean));
     }
 
+    /**
+     * 讀取從藍牙裝置傳送資料
+     */
     private void read() {
+        Log.d(info.TAG(), "read...");
         Thread t = new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
                     while (true) {
-                        Log.d(TAG, "readData");
+                        Log.d(info.TAG(), "readData");
                         try {
                             byte[] buffer = new byte[128];
                             int count = mInputStream.read(buffer);
                             Message msg = new Message();
                             msg.obj = new String(buffer, 0, count, "utf-8");
-                            Log.d(TAG, (String) msg.obj);
-                            handler.sendMessage(msg);
+                            Log.d(info.TAG(), (String) msg.obj);
+                            mReadHandler.sendMessage(msg);
                         } catch (IOException e) {
-                            Log.d(TAG, "Error: " + e.getMessage());
+                            Log.d(info.TAG(), "Error: " + e.getMessage());
                             break;
                         }
                     }
                 } catch (Exception e) {
-                    Log.e(TAG, "Error: " + e.getMessage());
+                    Log.e(info.TAG(), "Error: " + e.getMessage());
                 }
             }
         });
 
         t.start();
-    }
-
-    private Handler handler = new Handler(){
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-//            Toast.makeText(getContext(), (String) msg.obj, Toast.LENGTH_LONG).show();
-            try {
-                String data = (String) msg.obj;
-                Toast.makeText(getContext(), data, Toast.LENGTH_LONG).show();
-                JSONObject jsonObject = new JSONObject(data);
-
-
-                HashMap<String, Object>  map = tools.Convert.toMap(jsonObject);
-                updateTemp(map);
-            } catch (JSONException JSONE) {
-                Log.e(TAG, "error :  " + JSONE.getMessage());
-            }
-
-        }
-    };
-
-
-    public static String DecimalPoint(Double data) {
-        DecimalFormat df=new DecimalFormat("#.##");
-        return df.format(data);
     }
 
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
@@ -346,7 +332,6 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
                 if (device.getBondState() != BluetoothDevice.BOND_BONDED) {
                     Log.d("TEST", device.getAddress());
 
-//                    mScanDevices.add(device);
                     mDeviceListAdapter.addItem(BluetoothDeviceAdapter.NoPAIRED_ITEM_TYPE, device);
                     mDeviceListAdapter.notifyDataSetChanged();
                 }
@@ -362,8 +347,8 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
     }
 
     private void  getPairedDevices() {
-        mPairedDevices = BluetoothSingleton.getInstance().getAdapter().getBondedDevices();
-        Log.e(TAG, ""+mPairedDevices.size());
+        mPairedDevices = Singleton.getInstance().getBLEAdapter().getBondedDevices();
+        Log.e(info.TAG(), ""+mPairedDevices.size());
         ArrayList<BluetoothDevice> list = new ArrayList<>();
         for(BluetoothDevice device : mPairedDevices) {
             list.add(device);
@@ -375,52 +360,44 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
     private ListView.OnItemClickListener listener = new ListView.OnItemClickListener(){
         @Override
         public void onItemClick(AdapterView<?> arg0, View arg1, int position, long arg3) {
-            Log.d(TAG, "item :" + position);
+            Log.d(info.TAG(), "item :" + position);
             final int p = position;
             Thread t = new Thread(new Runnable() {
                 @Override
                 public void run() {
                     Message msg = Message.obtain();
-                    UUID MY_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
-                    BluetoothDevice device = mDeviceListAdapter.getDevice(p);
+                    BluetoothDevice device= mDeviceListAdapter.getDevice(p);
+                    Singleton.getInstance().setBLEDevice(device);
                     try {
-                        BluetoothSocket bluetoothSocket = device.createRfcommSocketToServiceRecord(MY_UUID);
+                        Singleton.getInstance().setBLESocket(device.createRfcommSocketToServiceRecord(info.BluetoothUUID()));
 
                         try {
-                            bluetoothSocket.connect();
-                            BluetoothSingleton.getInstance().setSocket(bluetoothSocket);
-                            BluetoothSingleton.getInstance().setDevice(device);
+                            Singleton.getInstance().getBLESocket().connect();
+                            mInputStream = Singleton.getInstance().getBLESocket().getInputStream();
+                            mOutputStream = Singleton.getInstance().getBLESocket().getOutputStream();
 
                             msg.obj = "device " + device.getName() + " Connection success";
-                            handler.sendMessage(msg);
+
                         } catch (IOException ioe) {
                             try {
-                                bluetoothSocket =(BluetoothSocket) device.getClass().getMethod("createRfcommSocket", new Class[] {int.class}).invoke(device,1);
-                                bluetoothSocket.connect();
+                                Singleton.getInstance().setBLESocket((BluetoothSocket) device.getClass().getMethod("createRfcommSocket", new Class[] {int.class}).invoke(device,1));
+                                Singleton.getInstance().getBLESocket().connect();
 
-                                // TODO
-
-//                                BluetoothSingleton.getInstance().setSocket(bluetoothSocket);
-//                                BluetoothSingleton.getInstance().setDevice(device);
-//                                mBluetootgDevice = BluetoothSingleton.getInstance().getDevic();
-//                                mBluetoothSocket = BluetoothSingleton.getInstance().getSocket();
-                                mInputStream = bluetoothSocket.getInputStream();
-                                mOutputStream = bluetoothSocket.getOutputStream();
+                                mInputStream = Singleton.getInstance().getBLESocket().getInputStream();
+                                mOutputStream = Singleton.getInstance().getBLESocket().getOutputStream();
 
                                 msg.obj = "device " + device.getName() + " Connection success";
-                                handler.sendMessage(msg);
-                                Log.e("","Connected");
                             } catch (Exception e) {
-                                Log.e(TAG, "error : " + e.getMessage());
+                                Log.e(info.TAG(), "error : " + e.getMessage());
                                 msg.obj = "device " + device.getName() + " Connection fail";
-                                handler.sendMessage(msg);
                             }
                         }
                     } catch (IOException ioe) {
-                        Log.e(TAG, "error : " + ioe.getMessage());
+                        Log.e(info.TAG(), "error : " + ioe.getMessage());
                         msg.obj = "device " + device.getName() + " Connection fail";
-                        handler.sendMessage(msg);
                     }
+
+                    mConnHandler.sendMessage(msg);
                 }
             });
 
@@ -428,4 +405,3 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
         }
     };
 }
-
