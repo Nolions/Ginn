@@ -1,4 +1,4 @@
-package tw.nolions.coffeebeanslife.viewmodel;
+package tw.nolions.coffeebeanslife.viewModel;
 
 import android.arch.lifecycle.ViewModel;
 import android.content.Context;
@@ -8,6 +8,7 @@ import android.util.Log;
 
 import java.util.HashMap;
 
+import tools.Convert;
 import tw.nolions.coffeebeanslife.R;
 
 public class MainViewModel extends ViewModel {
@@ -117,9 +118,9 @@ public class MainViewModel extends ViewModel {
     }
 
     public void updateTemp(HashMap data) {
-        String bean = tools.Convert.DecimalPoint(Double.valueOf((String) data.get("bean")));
-        String stove = tools.Convert.DecimalPoint(Double.valueOf((String) data.get("stove")));
-        String environment = tools.Convert.DecimalPoint(Double.valueOf((String) data.get("environment")));
+        String bean = Convert.DecimalPoint((Double)data.get("b"));
+        String stove = Convert.DecimalPoint((Double) data.get("s"));
+        String environment = Convert.DecimalPoint((Double) data.get("e"));
 
         this.updateTempLabel(bean, stove, environment);
     }

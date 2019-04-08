@@ -45,13 +45,14 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
 
 import tw.nolions.coffeebeanslife.R;
 import tw.nolions.coffeebeanslife.service.BluetoothAcceptService;
-import tw.nolions.coffeebeanslife.viewmodel.MainViewModel;
+import tw.nolions.coffeebeanslife.viewModel.MainViewModel;
 import tw.nolions.coffeebeanslife.widget.BluetoothDeviceAdapter;
 import tw.nolions.coffeebeanslife.widget.MPChart;
 
@@ -286,7 +287,7 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
     private void updateTemp(HashMap data) {
         mMainViewModel.updateTemp(data);
 
-        String bean = Convert.DecimalPoint(Double.valueOf((String) data.get("bean")));
+        String bean = Convert.DecimalPoint((Double)data.get("b"));
         mChart.addEntry(0, Float.parseFloat(bean));
     }
 
@@ -300,14 +301,29 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
             public void run() {
                 try {
                     while (true) {
-                        Log.d(info.TAG(), "readData");
                         try {
-                            byte[] buffer = new byte[128];
-                            int count = mInputStream.read(buffer);
-                            Message msg = new Message();
-                            msg.obj = new String(buffer, 0, count, "utf-8");
-                            Log.d(info.TAG(), (String) msg.obj);
-                            mReadHandler.sendMessage(msg);
+                            int bytes;
+                            byte[] buffer = new byte[1024];
+                            String end = "\n";
+                            StringBuilder curMsg = new StringBuilder();
+
+                            while (-1 != (bytes = mInputStream.read(buffer))) {
+                                curMsg.append(new String(buffer, 0, bytes, Charset.forName("ISO-8859-1")));
+                                int endIdx = curMsg.indexOf(end);
+                                if (endIdx != -1) {
+                                    String fullMessage = curMsg.substring(0, endIdx + end.length());
+                                    curMsg.delete(0, endIdx + end.length());
+
+                                    // Now send fullMessage
+                                    // Send the obtained bytes to the UI Activity
+                                    Log.d(info.TAG(), fullMessage);
+                                    Message msg = new Message();
+                                    msg.obj = fullMessage;
+                                    mReadHandler.sendMessage(msg);
+                                }
+                            }
+
+//
                         } catch (IOException e) {
                             Log.d(info.TAG(), "Error: " + e.getMessage());
                             break;
@@ -330,7 +346,6 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
             {
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                 if (device.getBondState() != BluetoothDevice.BOND_BONDED) {
-                    Log.d("TEST", device.getAddress());
 
                     mDeviceListAdapter.addItem(BluetoothDeviceAdapter.NoPAIRED_ITEM_TYPE, device);
                     mDeviceListAdapter.notifyDataSetChanged();

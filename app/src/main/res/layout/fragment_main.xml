@@ -8,7 +8,7 @@
 
         <variable
             name="mainViewModel"
-            type="tw.nolions.coffeebeanslife.viewmodel.MainViewModel" />
+            type="tw.nolions.coffeebeanslife.viewModel.MainViewModel" />
     </data>
 
     <LinearLayout
