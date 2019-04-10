@@ -14,7 +14,7 @@ public class Convert {
     /**
      * 取到小數點第二位
      * @param data
-     * @return
+     * @return String
      */
     public static String DecimalPoint(Double data) {
         return DecimalPoint(data, "#.##");
@@ -24,7 +24,7 @@ public class Convert {
      * Double轉換成指定格式字串
      * @param data
      * @param format
-     * @return
+     * @return String
      */
     public static String DecimalPoint(Double data, String format) {
         DecimalFormat df=new DecimalFormat(format);
@@ -35,7 +35,7 @@ public class Convert {
     /**
      * Convert to HaspMap form JSONObject
      * @param object
-     * @return
+     * @return HashMap
      * @throws JSONException
      */
     public static HashMap<String, Object> toMap(JSONObject object) throws JSONException {
@@ -61,7 +61,7 @@ public class Convert {
     /**
      * Convert to ArrayList form JSONOArray
      * @param array
-     * @return
+     * @return ArrayList
      * @throws JSONException
      */
     public static ArrayList<Object> toList(JSONArray array) throws JSONException {
