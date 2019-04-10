@@ -13,14 +13,14 @@ import tw.nolions.coffeebeanslife.R;
 
 public class MainViewModel extends ViewModel {
     private final String TAG;
-    private final float TEMP_RANGE = 5;
+    private final int TEMP_RANGE = 5;
 
-    public final ObservableField<String> mBeansTemp, mStoveTemp, mEnvironmentTemp;
-    public final ObservableBoolean isPowerOn, isImport;
+    public final ObservableField<String> mBeansTemp, mStoveTemp, mEnvironmentTemp, mTargetTemp;
+    public final ObservableBoolean isImport;
 
     private Context mContext;
 
-    private float mNowStoveTemp = 0;
+    private int mNowSetTemp = 0;
 
     public MainViewModel(Context context) {
         mContext = context;
@@ -29,17 +29,22 @@ public class MainViewModel extends ViewModel {
         mBeansTemp = new ObservableField<>();
         mStoveTemp = new ObservableField<>();
         mEnvironmentTemp = new ObservableField<>();
+        mTargetTemp = new ObservableField<>();
 
-        isPowerOn = new ObservableBoolean(false);
-        isImport = new ObservableBoolean(true);
+        this.setTargetTemp("0");
+        isImport = new ObservableBoolean(false);
     }
 
-    public void setMNowStoveTemp(float temp) {
-        this.mNowStoveTemp = temp;
+    public void setNowSetTemp(int temp) {
+        this.mNowSetTemp = temp;
     }
 
-    public float getmNowStoveTemp() {
-        return mNowStoveTemp;
+    public int getNowSetTemp() {
+        return this.mNowSetTemp;
+    }
+
+    public void setTargetTemp(String temp) {
+        this.mTargetTemp.set(temp);
     }
 
     public void setBeansTemp(String temp) {
@@ -58,14 +63,14 @@ public class MainViewModel extends ViewModel {
         Log.d(TAG, "onclick TempPlusActionButton...");
 
         this.addTemp();
-        this.setStoveTemp();
+        this.setTargetTemp("" + this.getNowSetTemp());
     }
 
     public void onClickTempLessActionButton() {
         Log.d(TAG, "onclick TempLessActionButton...");
 
         this.lessTemp();
-        this.setStoveTemp();
+        this.setTargetTemp("" + this.getNowSetTemp());
     }
 
     public void onClickBeanImportActionButton() {
@@ -73,48 +78,38 @@ public class MainViewModel extends ViewModel {
 
         if (isImport.get() == true) {
             isImport.set(false);
+            setTargetTemp("0");
         } else {
             isImport.set(true);
         }
     }
 
-    public void onClickBoomActionButton() {
-        Log.d(TAG, "onclick BoomActionButton...");
-
-
+    public void onClickOneBoom() {
+        Log.d(TAG, "One Boom...");
     }
 
-    public void onChangedPowerOnSwitch(Boolean isChecked) {
-        Log.d(TAG, "on change PowerOnSwitch...");
-        Log.d(TAG, "PowerOnSwitch status is " + isChecked);
-
-        isPowerOn.set(isChecked);
+    public void onClickTwoBoom() {
+        Log.d(TAG, "Two Boom...");
     }
 
     private void addTemp() {
-        float temp = this.mNowStoveTemp;
-                //this.getmNowStoveTemp();
+        int temp = this.getNowSetTemp();
 
         if (temp <= 95) {
             temp = temp + TEMP_RANGE;
         }
 
-        this.mNowStoveTemp = temp;
+        this.setNowSetTemp(temp);
     }
 
     private void lessTemp() {
-        float temp = this.mNowStoveTemp;
-                //this.getmNowStoveTemp();
+        int temp = this.getNowSetTemp();
 
         if (temp >= 5) {
             temp = temp - TEMP_RANGE;
         }
 
-        this.mNowStoveTemp = temp;
-    }
-
-    private void setStoveTemp() {
-        mStoveTemp.set(String.valueOf(this.getmNowStoveTemp() + mContext.getResources().getString(R.string.tempUnit)));
+        this.setNowSetTemp(temp);
     }
 
     public void updateTemp(HashMap data) {

@@ -39,7 +39,7 @@
 
             <TextView
                 android:id="@+id/temp_beans"
-                android:layout_width="100dp"
+                android:layout_width="120dp"
                 android:layout_height="wrap_content"
                 android:textSize="18sp"
                 android:textStyle="bold"
@@ -53,7 +53,7 @@
 
             <TextView
                 android:id="@+id/temp_stove"
-                android:layout_width="100dp"
+                android:layout_width="120dp"
                 android:textSize="18sp"
                 android:textStyle="bold"
                 android:layout_height="wrap_content"
@@ -67,7 +67,7 @@
 
             <TextView
                 android:id="@+id/temp_environment"
-                android:layout_width="100dp"
+                android:layout_width="120dp"
                 android:layout_height="wrap_content"
                 android:textSize="18sp"
                 android:textStyle="bold"
@@ -85,95 +85,116 @@
                 android:id="@+id/lineChart"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:layout_marginTop="16dp"
                 android:visibility="visible"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
-            <Switch
-                android:id="@+id/power_on_Switch"
-                android:layout_width="65dp"
-                android:layout_height="58dp"
-                android:layout_marginTop="8dp"
-                android:layout_marginStart="10dp"
-                android:checked="false"
-                android:onCheckedChanged="@{(button, bool) -> mainViewModel.onChangedPowerOnSwitch(bool)}"
-                android:scaleX="1.5"
-                android:scaleY="1.5"
-                android:showText="true"
-                android:textOff="@string/power_on"
-                android:textOn="@string/power_off"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                tools:targetApi="lollipop" />
-
             <android.support.design.widget.FloatingActionButton
-                android:id="@+id/floatingActionButton"
+                android:id="@+id/bean_import_ActionButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
-                android:layout_marginBottom="140dp"
-                android:alpha="0.5"
-                android:clickable="@{mainViewModel.isImport ? true : false}"
+                android:layout_marginTop="30dp"
+                android:alpha="0.6"
                 android:focusable="true"
-                android:onClick="@{() -> mainViewModel.onClickBoomActionButton()}"
+                android:onClick="@{() -> mainViewModel.onClickBeanImportActionButton()}"
+                android:visibility="@{mainViewModel.isImport ? View.VISIBLE : View.GONE}"
+                app:fabSize="mini"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/import_64x64" />
+
+            <android.support.design.widget.FloatingActionButton
+                android:id="@+id/bean_export_ActionButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="30dp"
+                android:alpha="0.6"
+                android:focusable="true"
+                android:onClick="@{() -> mainViewModel.onClickBeanImportActionButton()}"
+                android:visibility="@{mainViewModel.isImport ? View.GONE : View.VISIBLE}"
+                app:fabSize="mini"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/export_64x64" />
+
+            <android.support.design.widget.FloatingActionButton
+                android:id="@+id/BoomOnefloatingActionButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_marginBottom="120dp"
+                android:alpha="0.5"
+                android:clickable="@{mainViewModel.isImport? true : false}"
+                android:visibility="@{mainViewModel.isImport ? View.VISIBLE: View.GONE }"
+                android:focusable="true"
+                android:onClick="@{() -> mainViewModel.onClickOneBoom()}"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:srcCompat="@drawable/fire64x64"
                 app:fabSize="mini"/>
 
             <android.support.design.widget.FloatingActionButton
-                android:id="@+id/bean_import_ActionButton"
+                android:id="@+id/BoonTwofloatingActionButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="60dp"
-                android:layout_marginStart="10dp"
-                android:alpha="0.6"
-                android:clickable="@{mainViewModel.isPowerOn ? true : false}"
+                android:layout_marginStart="8dp"
+                android:layout_marginBottom="56dp"
+                android:alpha="0.5"
+                android:clickable="@{mainViewModel.isImport? true : false}"
+                android:visibility="@{mainViewModel.isImport ? View.VISIBLE: View.GONE }"
                 android:focusable="true"
-                android:onClick="@{() -> mainViewModel.onClickBeanImportActionButton()}"
-                android:visibility="@{mainViewModel.isImport ? View.VISIBLE : View.GONE}"
+                android:onClick="@{() -> mainViewModel.onClickTwoBoom()}"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:srcCompat="@drawable/import_64x64"
+                app:srcCompat="@drawable/fire64x64"
                 app:fabSize="mini"/>
-
-            <android.support.design.widget.FloatingActionButton
-                android:id="@+id/bean_export_ActionButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="10dp"
-                android:layout_marginBottom="60dp"
-                android:alpha="0.6"
-                android:clickable="@{mainViewModel.isPowerOn ? true : false}"
-                android:focusable="true"
-                android:onClick="@{() -> mainViewModel.onClickBeanImportActionButton()}"
-                android:visibility="@{mainViewModel.isImport ? View.GONE : View.VISIBLE}"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:srcCompat="@drawable/export_64x64"
-                app:fabSize="mini"/>
-
 
             <ImageView
                 android:id="@+id/imageView"
                 android:layout_width="40dp"
                 android:layout_height="40dp"
                 android:layout_marginTop="0dp"
-                android:layout_marginRight="0dp"
+                android:layout_marginEnd="10dp"
                 android:alpha="0.6"
                 android:contentDescription="@string/temp_icon"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 app:srcCompat="@drawable/ic_temp" />
 
+            <TextView
+                android:id="@+id/temp_target"
+                android:layout_width="40dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="45dp"
+                android:layout_marginEnd="8dp"
+                android:text="@{mainViewModel.mTargetTemp}"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="45dp"
+                android:layout_marginEnd="4dp"
+                android:text="@string/tempUnit"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
             <android.support.design.widget.FloatingActionButton
                 android:id="@+id/temp_plus_ActionButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="5dp"
+                android:layout_marginEnd="10dp"
                 android:layout_marginBottom="120dp"
                 android:alpha="0.6"
-                android:clickable="@{mainViewModel.isPowerOn ? true : false}"
+                android:clickable="@{mainViewModel.isImport ? true : false}"
                 android:focusable="true"
                 android:onClick="@{() -> mainViewModel.onClickTempPlusActionButton()}"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -185,10 +206,10 @@
                 android:id="@+id/temp_less_ActionButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="5dp"
+                android:layout_marginEnd="10dp"
                 android:layout_marginBottom="56dp"
                 android:alpha="0.6"
-                android:clickable="@{mainViewModel.isPowerOn ? true : false}"
+                android:clickable="@{mainViewModel.isImport ? true : false}"
                 android:focusable="true"
                 android:onClick="@{()->mainViewModel.onClickTempLessActionButton()}"
                 app:layout_constraintBottom_toBottomOf="parent"
@@ -196,9 +217,7 @@
                 app:srcCompat="@android:drawable/arrow_down_float"
                 app:fabSize="mini"/>
 
-
         </android.support.constraint.ConstraintLayout>
-
 
     </LinearLayout>
 
