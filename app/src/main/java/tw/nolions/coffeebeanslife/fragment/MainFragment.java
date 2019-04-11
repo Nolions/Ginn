@@ -17,7 +17,6 @@ import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentTransaction;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -277,13 +276,6 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
         return true;
     }
 
-    private void switchFragment(Fragment fragment) {
-        FragmentTransaction transaction = getFragmentManager().beginTransaction();
-        transaction.replace(R.id.container, fragment);
-        transaction.addToBackStack(fragment.getClass().getName());
-        transaction.commit();
-    }
-
     private void updateTemp(HashMap data) {
         mMainViewModel.updateTemp(data);
 
@@ -341,7 +333,10 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+            Log.d(info.TAG(), "TEST");
             String action = intent.getAction();
+            Log.d(info.TAG(), "BLE Connection stat:" + action);
+
             if (action.equals(BluetoothDevice.ACTION_FOUND))  //收到bluetooth狀態改變
             {
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
@@ -356,7 +351,13 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
 
     private void registerBroadcastReceiver() {
         IntentFilter intent = new IntentFilter();
-        intent.addAction(BluetoothDevice.ACTION_FOUND);
+//        intent.addAction(BluetoothDevice.ACTION_FOUND);
+        intent.addAction(BluetoothDevice.ACTION_ACL_CONNECTED);
+        intent.addAction(BluetoothDevice.ACTION_ACL_DISCONNECT_REQUESTED);
+        intent.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED);
+//        intent.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
+//        intent.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
+        intent.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
         getContext().registerReceiver(mReceiver, intent);
 
     }
@@ -389,7 +390,7 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
                         try {
                             Singleton.getInstance().getBLESocket().connect();
                             mInputStream = Singleton.getInstance().getBLESocket().getInputStream();
-                            mOutputStream = Singleton.getInstance().getBLESocket().getOutputStream();
+                            mMainViewModel.setOutputStream(Singleton.getInstance().getBLESocket().getOutputStream());
 
                             msg.obj = "device " + device.getName() + " Connection success";
 
@@ -399,7 +400,8 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
                                 Singleton.getInstance().getBLESocket().connect();
 
                                 mInputStream = Singleton.getInstance().getBLESocket().getInputStream();
-                                mOutputStream = Singleton.getInstance().getBLESocket().getOutputStream();
+                                mMainViewModel.setOutputStream(Singleton.getInstance().getBLESocket().getOutputStream());
+
 
                                 msg.obj = "device " + device.getName() + " Connection success";
                             } catch (Exception e) {
