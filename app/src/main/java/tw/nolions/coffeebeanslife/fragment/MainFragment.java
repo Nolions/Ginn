@@ -299,6 +299,7 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
                             String end = "\n";
                             StringBuilder curMsg = new StringBuilder();
 
+
                             while (-1 != (bytes = mInputStream.read(buffer))) {
                                 curMsg.append(new String(buffer, 0, bytes, Charset.forName("ISO-8859-1")));
                                 int endIdx = curMsg.indexOf(end);
@@ -311,6 +312,7 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
                                     Log.d(info.TAG(), fullMessage);
                                     Message msg = new Message();
                                     msg.obj = fullMessage;
+
                                     mReadHandler.sendMessage(msg);
                                 }
                             }

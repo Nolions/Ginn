@@ -18,9 +18,13 @@ import com.github.mikephil.charting.utils.ColorTemplate;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Calendar;
+
 
 public class MPChart implements OnChartValueSelectedListener {
 
+    private Calendar startCal;
+    private Calendar nowCal;
     private int[] mColors = new int[]{
             Color.parseColor("#5abdfc"),    //蓝色
             Color.parseColor("#eb73f6")    //紫色
@@ -29,6 +33,9 @@ public class MPChart implements OnChartValueSelectedListener {
     private LineChart mLineChart;
     private String[] mDataSetNames;
     private String mDescribe;
+
+    private Long mStartTime;
+    private ArrayList<Long> mXAixData = new ArrayList<>();
 
     public MPChart(LineChart lineChart, String describe, String[] names) {
         this.mLineChart = lineChart;
@@ -98,12 +105,13 @@ public class MPChart implements OnChartValueSelectedListener {
         xAxis.setGranularityEnabled(true);
         xAxis.setGranularity(1f);
 
-        // TODO
         // format XAxis Value
+        String[] a = {"1","2"};
+
         xAxis.setValueFormatter(new IAxisValueFormatter() {
             @Override
             public String getFormattedValue(float value, AxisBase axis) {
-                return String.valueOf(value);
+                return "" + mXAixData.get((int) value);
             }
         });
 
@@ -164,10 +172,19 @@ public class MPChart implements OnChartValueSelectedListener {
             ArrayList<Entry> entries = new ArrayList<>();
             entries.add(new Entry(0, 0));
 
+            mStartTime = System.currentTimeMillis()/1000;
+            mXAixData.add(0L);
+
             String name =  (String) Array.get(mDataSetNames, lineIndex);
             set = this.initLineDataSet(name, entries);
             data.addDataSet(set);
         }
+        Long sec = 1L;
+        if (System.currentTimeMillis()/1000 - mStartTime != 0) {
+            sec = System.currentTimeMillis()/1000 - mStartTime;
+        }
+        mXAixData.add(sec);
+
 
         // choose a random dataSet
         int randomDataSetIndex = (int) (Math.random() * data.getDataSetCount());
