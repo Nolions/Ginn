@@ -15,8 +15,12 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.NonNull;
+import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -43,7 +47,6 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -55,10 +58,13 @@ import tw.nolions.coffeebeanslife.viewModel.MainViewModel;
 import tw.nolions.coffeebeanslife.widget.BluetoothDeviceAdapter;
 import tw.nolions.coffeebeanslife.widget.MPChart;
 
-public class MainFragment extends Fragment implements Toolbar.OnCreateContextMenuListener{
+public class MainFragment extends Fragment implements
+        Toolbar.OnCreateContextMenuListener,
+        NavigationView.OnNavigationItemSelectedListener {
     // UI Widget
-    private LineChart mLineChart;
+    private View mView;
     private Toolbar mToolBar;
+    private LineChart mLineChart;
     private ListView mDeviceListView;
     private AlertDialog alertDialog;
 
@@ -67,7 +73,7 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
     private FragmentMainBinding mBinding;
 
     // bluetooth
-    private OutputStream mOutputStream;
+//    private OutputStream mOutputStream;
     private InputStream mInputStream;
 
     // widget
@@ -81,6 +87,8 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
     // handler
     private Handler mConnHandler;
     private Handler mReadHandler;
+
+    private DrawerLayout mDrawerLayout;
 
     @NonNull
     public static MainFragment newInstance() {
@@ -158,14 +166,43 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         mBinding = DataBindingUtil.inflate(inflater, R.layout.fragment_main, container, false);
-        View v = mBinding.getRoot();
+        mView = mBinding.getRoot();
 
-        mLineChart = (LineChart) v.findViewById(R.id.lineChart);
-        mToolBar = (Toolbar) v.findViewById(R.id.toolbar);
+        initView();
+
+        return mView;
+    }
+
+    private void initView() {
+
+        initToolbar();
+        initLineChart();
+    }
+
+    private void initLineChart() {
+        mLineChart = (LineChart) mView.findViewById(R.id.lineChart);
+    }
+
+    private void initToolbar() {
+        mToolBar = (Toolbar) mView.findViewById(R.id.toolbar);
         ((MainActivity) getActivity()).setSupportActionBar(mToolBar);
         setHasOptionsMenu(true);
 
-        return v;
+        mDrawerLayout = (DrawerLayout) mView.findViewById(R.id.drawer_layout);
+        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+                (MainActivity)getActivity(),
+                mDrawerLayout,
+                mToolBar,
+                R.string.navigation_drawer_close,
+                R.string.navigation_drawer_open
+        );
+//        mDrawerLayout.setDrawerListener(mDrawerToggle);
+
+        mDrawerLayout.addDrawerListener(toggle);
+        toggle.syncState();
+
+        NavigationView navigationView = (NavigationView) mView.findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(this);
     }
 
     @Override
@@ -188,24 +225,23 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
         mBinding.setMainViewModel(mMainViewModel);
 
         String[] names = new String[]{
-                "豆溫"
+                getActivity().getString(R.string.temp_beans),
         };
 
         String description = "No chart data available. Use the menu to add entries and data sets!";
         mChart = new MPChart(mLineChart, description, names);
         mChart.init();
-
     }
 
     @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         menu.clear();
-        inflater.inflate(R.menu.menu_main, menu);
+        inflater.inflate(R.menu.toolbar_menu, menu);
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem menuItem) {
-        Log.e(info.TAG(), "onClick menu item");
+        Log.d(info.TAG(), "onClick Options menu item...");
         switch (menuItem.getItemId()) {
             case R.id.action_conn:
                 getPairedDevices();
@@ -216,7 +252,7 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
                 mDeviceListView.setOnItemClickListener(listener);
 
                 AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
-                builder.setIcon(R.drawable.ic_bluetooth_black_24dp);
+                builder.setIcon(R.drawable.ic_bluetooth_black);
                 builder.setTitle(R.string.selectBluetoothDevice);
                 builder.setCancelable(false);
                 builder.setPositiveButton(R.string.cancel, new DialogInterface.OnClickListener() {
@@ -236,35 +272,38 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
                 alertDialog.show();
 
                 break;
-            case R.id.action_record:
-                Log.d(info.TAG(), "onClick Record menu item");
-                break;
-            case R.id.action_exit:
-                Log.d(info.TAG(), "onClick Record exit item");
-
-                AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getContext());
-                alertDialogBuilder.setTitle("Exit Application?");
-                alertDialogBuilder.setMessage("Click yes to exit!");
-                alertDialogBuilder.setCancelable(false);
-                alertDialogBuilder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        android.os.Process.killProcess(android.os.Process.myPid());
-                        System.exit(1);
-                    }
-                });
-
-                alertDialogBuilder.setNegativeButton("No", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        dialog.cancel();
-                    }
-                });
-
-                alertDialog = alertDialogBuilder.create();
-                alertDialog.show();
-                break;
         }
 
         return false;
+    }
+
+    @Override
+    public boolean onNavigationItemSelected(MenuItem item) {
+        Log.e(info.TAG(), "onClick Navigation menu item...");
+        switch (item.getItemId()) {
+            case R.id.nav_record:
+                Log.d(info.TAG(), "onClick nav Record item");
+                break;
+            case R.id.nav_save:
+                Log.d(info.TAG(), "onClick nav Save item");
+                break;
+            case R.id.nav_export:
+                Log.d(info.TAG(), "onClick nav Export item");
+                break;
+            case R.id.nav_exit:
+                Log.d(info.TAG(), "onClick nav Exit item");
+                exitAPP();
+                break;
+            case R.id.nav_share:
+                Log.d(info.TAG(), "onClick nav Share item");
+                break;
+            case R.id.nav_send:
+                Log.d(info.TAG(), "onClick nav Send item");
+                break;
+        }
+
+        mDrawerLayout.closeDrawer(GravityCompat.START);
+        return true;
     }
 
     private boolean checkBluetoothConn() {
@@ -316,8 +355,6 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
                                     mReadHandler.sendMessage(msg);
                                 }
                             }
-
-//
                         } catch (IOException e) {
                             Log.d(info.TAG(), "Error: " + e.getMessage());
                             break;
@@ -432,4 +469,26 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
             t.start();
         }
     };
+
+    private void exitAPP() {
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getContext());
+        alertDialogBuilder.setTitle("Exit Application?");
+        alertDialogBuilder.setMessage("Click yes to exit!");
+        alertDialogBuilder.setCancelable(false);
+        alertDialogBuilder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                android.os.Process.killProcess(android.os.Process.myPid());
+                System.exit(1);
+            }
+        });
+
+        alertDialogBuilder.setNegativeButton("No", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int id) {
+                dialog.cancel();
+            }
+        });
+
+        alertDialog = alertDialogBuilder.create();
+        alertDialog.show();
+    }
 }

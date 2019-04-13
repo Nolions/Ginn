@@ -7,6 +7,7 @@
     <string name="temp_stove_label">爐溫:</string>
     <string name="temp_environment_label">環溫:</string>
     <string name="tempUnit">°C</string>
+    <string name="temp_beans">豆溫</string>
 
     <string name="temp_icon">爐溫Icon</string>
 
@@ -23,7 +24,6 @@
     <string name="waitGetDeviceName">裝置連接時將顯示裝置名稱</string>
 
     <!-- Menu items -->
-
     <string name="menu_main_conn">連接裝置</string>
     <string name="menu_main_record">查看紀錄</string>
     <string name="menu_main_exit">離開APP</string>
@@ -31,5 +31,15 @@
     <string name="menu_scan">搜尋</string>
     <string name="menu_stop">停止</string>
 
+    <!-- navigation_drawer_close -->
+    <string name="navigation_drawer_close">關閉側邊選單</string>
+    <string name="navigation_drawer_open">開側邊選單</string>
 
+    <string name="navigation_menu_record">查看紀錄</string>
+    <string name="navigation_menu_model_build">模式設定</string>
+    <string name="navigation_menu_save">儲存</string>
+    <string name="navigation_menu_export">匯出</string>
+    <string name="navigation_menu_exit">離開APP</string>
+    <string name="navigation_menu_share">分享APP</string>
+    <string name="navigation_menu_send">回報問題</string>
 </resources>
