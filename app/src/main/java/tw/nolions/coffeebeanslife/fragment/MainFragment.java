@@ -351,6 +351,9 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
         }
     };
 
+    /**
+     * register Broadcast's Receiver
+     */
     private void registerBroadcastReceiver() {
         IntentFilter intent = new IntentFilter();
 //        intent.addAction(BluetoothDevice.ACTION_FOUND);
@@ -364,6 +367,9 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
 
     }
 
+    /**
+     * get device of Paired
+     */
     private void  getPairedDevices() {
         mPairedDevices = Singleton.getInstance().getBLEAdapter().getBondedDevices();
         Log.e(info.TAG(), ""+mPairedDevices.size());
@@ -375,6 +381,9 @@ public class MainFragment extends Fragment implements Toolbar.OnCreateContextMen
         mDeviceListAdapter.setData(BluetoothDeviceAdapter.PAIRED_ITEM_TYPE, list);
     }
 
+    /**
+     * Bluetooth device of Listview's item ClickListener
+     */
     private ListView.OnItemClickListener listener = new ListView.OnItemClickListener(){
         @Override
         public void onItemClick(AdapterView<?> arg0, View arg1, int position, long arg3) {

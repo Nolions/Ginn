@@ -18,13 +18,10 @@ import com.github.mikephil.charting.utils.ColorTemplate;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Calendar;
 
 
 public class MPChart implements OnChartValueSelectedListener {
 
-    private Calendar startCal;
-    private Calendar nowCal;
     private int[] mColors = new int[]{
             Color.parseColor("#5abdfc"),    //蓝色
             Color.parseColor("#eb73f6")    //紫色
@@ -53,8 +50,10 @@ public class MPChart implements OnChartValueSelectedListener {
 
     }
 
+    /**
+     * init
+     */
     public void init() {
-
         this.mLineChart.setOnChartValueSelectedListener(this);
 
         this.description(this.mDescribe);
@@ -63,10 +62,13 @@ public class MPChart implements OnChartValueSelectedListener {
         this.xAxis();
         this.yAxis();
 
-
         this.refresh();
     }
 
+    /**
+     * setting chart's describe
+     * @param String  describe
+     */
     public void description(String describe) {
         this.mLineChart.setNoDataText(describe);
 
@@ -75,10 +77,16 @@ public class MPChart implements OnChartValueSelectedListener {
         this.mLineChart.setDescription(description);   //右下角说明文字
     }
 
+    /**
+     * setting Draw Grid of Background
+     */
     public void background() {
         this.mLineChart.setDrawGridBackground(false);
     }
 
+    /**
+     * border setting
+     */
     public void border() {
         this.mLineChart.setDrawBorders(true);    //四周是不是有边框
         this.mLineChart.setBorderWidth(0.1f);
@@ -90,23 +98,29 @@ public class MPChart implements OnChartValueSelectedListener {
     public void touchGestures() {
         // enable touch gestures
         this.mLineChart.setTouchEnabled(false);
+
         // if disabled, scaling can be done on x- and y-axis separately
         this.mLineChart.setPinchZoom(false);
+
         // enable scaling and dragging
         this.mLineChart.setDragEnabled(true);
         this.mLineChart.setScaleEnabled(true);
     }
 
+    /**
+     * xAxis setting
+     */
     public void xAxis() {
         XAxis xAxis = this.mLineChart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.enableGridDashedLine(10f, 10f, 0f);
         xAxis.setAxisMinimum(0);
+
         xAxis.setGranularityEnabled(true);
         xAxis.setGranularity(1f);
 
-        // format XAxis Value
-        String[] a = {"1","2"};
+        xAxis.setDrawAxisLine(false);
+        xAxis.setDrawLabels(true);
 
         xAxis.setValueFormatter(new IAxisValueFormatter() {
             @Override
@@ -114,19 +128,22 @@ public class MPChart implements OnChartValueSelectedListener {
                 return "" + mXAixData.get((int) value);
             }
         });
-
-
-        xAxis.setDrawAxisLine(false);
-        xAxis.setDrawLabels(true);
-//        xAxis.setLabelCount(mMonths.length); // setting length of XAxis
-//        xAxis.setTextColor(Color.parseColor("#b3b3b3")); // setting color of XAxis
     }
 
 
+    /**
+     * yAxis setting
+     */
     public void yAxis() {
         this.mLineChart.getAxisRight().setEnabled(false);
     }
 
+    /**
+     * init LineData's Set
+     * @param String name
+     * @param ArrayList entries
+     * @return LineDataSet
+     */
     private LineDataSet initLineDataSet(String name, ArrayList<Entry> entries) {
         //        int color = mColors[count % mColors.length];
         LineDataSet set = new LineDataSet(entries, name);
@@ -159,6 +176,11 @@ public class MPChart implements OnChartValueSelectedListener {
         this.mLineChart.notifyDataSetChanged();
     }
 
+    /**
+     * add line chart's entry
+     * @param int lineIndex
+     * @param float value
+     */
     public void addEntry(int lineIndex, float value) {
         LineData data = this.mLineChart.getLineData();
 
@@ -184,7 +206,6 @@ public class MPChart implements OnChartValueSelectedListener {
             sec = System.currentTimeMillis()/1000 - mStartTime;
         }
         mXAixData.add(sec);
-
 
         // choose a random dataSet
         int randomDataSetIndex = (int) (Math.random() * data.getDataSetCount());

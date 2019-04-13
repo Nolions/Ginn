@@ -17,7 +17,6 @@ import tools.info;
 import tw.nolions.coffeebeanslife.R;
 
 public class MainViewModel extends ViewModel {
-    private final String TAG;
     private final int TEMP_RANGE = 5;
     private String relayStatus = "c";
 
@@ -32,20 +31,20 @@ public class MainViewModel extends ViewModel {
 
     public MainViewModel(Context context) {
         mContext = context;
-        TAG = mContext.getResources().getString(R.string.app_name);
 
         mBeansTemp = new ObservableField<>();
         mStoveTemp = new ObservableField<>();
         mEnvironmentTemp = new ObservableField<>();
         mTargetTemp = new ObservableField<>();
 
-        this.setTargetTemp("0");
         isImport = new ObservableBoolean(false);
 
         init();
     }
 
     private void init() {
+        this.setTargetTemp("0");
+
         initHandler();
     }
 
@@ -58,8 +57,6 @@ public class MainViewModel extends ViewModel {
                 String data = (String) msg.obj;
                 Log.d(info.TAG(), "Send msg is " + data);
                 try {
-//                    mOutputStream.write(data.getBytes());
-
                     if (data.equals("c") || data.equals("o")) {
                         if (isImport.get() == true) {
                             mOutputStream.write("o".getBytes());
@@ -92,8 +89,6 @@ public class MainViewModel extends ViewModel {
         this.mOutputStream = outputStream;
     }
 
-
-
     public void setNowSetTemp(int temp) {
         this.mNowSetTemp = temp;
     }
@@ -119,7 +114,7 @@ public class MainViewModel extends ViewModel {
     }
 
     public void onClickTempPlusActionButton() {
-        Log.d(TAG, "onclick TempPlusActionButton...");
+        Log.d(info.TAG(), "onclick TempPlusActionButton...");
 
         Thread t = new Thread(new Runnable() {
             @Override
@@ -135,7 +130,7 @@ public class MainViewModel extends ViewModel {
     }
 
     public void onClickTempLessActionButton() {
-        Log.d(TAG, "onclick TempLessActionButton...");
+        Log.d(info.TAG(), "onclick TempLessActionButton...");
 
         Thread t = new Thread(new Runnable() {
             @Override
@@ -151,7 +146,7 @@ public class MainViewModel extends ViewModel {
     }
 
     public void onClickBeanImportActionButton() {
-        Log.d(TAG, "onclick BeanImportActionButton...");
+        Log.d(info.TAG(), "onclick BeanImportActionButton...");
 
         if (isImport.get() == true) {
             relayStatus = "c";
@@ -173,11 +168,11 @@ public class MainViewModel extends ViewModel {
     }
 
     public void onClickOneBoom() {
-        Log.d(TAG, "One Boom...");
+        Log.d(info.TAG(), "One Boom...");
     }
 
     public void onClickTwoBoom() {
-        Log.d(TAG, "Two Boom...");
+        Log.d(info.TAG(), "Two Boom...");
     }
 
     private void addTemp() {
@@ -200,17 +195,18 @@ public class MainViewModel extends ViewModel {
         this.setNowSetTemp(temp);
     }
 
+    /**
+     * update information of temp column
+     * @param HashMap data
+     */
     public void updateTemp(HashMap data) {
         String bean = Convert.DecimalPoint((Double)data.get("b"));
         String stove = Convert.DecimalPoint((Double) data.get("s"));
         String environment = Convert.DecimalPoint((Double) data.get("e"));
 
-        this.updateTempLabel(bean, stove, environment);
+        setBeansTemp(bean);
+        setStoveTemp(stove);
+        setEnvironmentTemp(environment);
     }
 
-    public void updateTempLabel(String beanTemp, String stoveTemp, String environmentTemp) {
-        setBeansTemp(beanTemp);
-        setStoveTemp(stoveTemp);
-        setEnvironmentTemp(environmentTemp);
-    }
 }
