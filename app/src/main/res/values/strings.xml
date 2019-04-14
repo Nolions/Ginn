@@ -2,44 +2,50 @@
     <!--app information-->
     <string name="app_name">Coffee Beans Life</string>
 
-    <!-- temp label -->
+    <!-- temp column -->
     <string name="temp_beans_label">豆溫:</string>
     <string name="temp_stove_label">爐溫:</string>
     <string name="temp_environment_label">環溫:</string>
-    <string name="tempUnit">°C</string>
-    <string name="temp_beans">豆溫</string>
+
 
     <string name="temp_icon">爐溫Icon</string>
 
-    <string name="power_on">On</string>
-    <string name="power_off">off</string>
-
-    <string name="selectBluetoothDevice">選擇連線裝置</string>
+    <!--<string name="menu_main_conn">連接裝置</string>-->
+    <!--<string name="waitGetDeviceName">裝置連接時將顯示裝置名稱</string>-->
 
     <string name="cancel">取消</string>
     <string name="search">搜尋</string>
     <string name="device">裝置</string>
 
+    <!-- AlertDialog-->
     <string name="noSupportBluetooth">該裝置不支援藍芽裝置</string>
-    <string name="waitGetDeviceName">裝置連接時將顯示裝置名稱</string>
-
-    <!-- Menu items -->
-    <string name="menu_main_conn">連接裝置</string>
-    <string name="menu_main_record">查看紀錄</string>
-    <string name="menu_main_exit">離開APP</string>
-
+    <string name="selectBluetoothDevice">選擇連線裝置</string>
     <string name="menu_scan">搜尋</string>
     <string name="menu_stop">停止</string>
+
+    <!-- Menu items -->
+    <!--<string name="menu_main_conn">連接裝置</string>-->
 
     <!-- navigation_drawer_close -->
     <string name="navigation_drawer_close">關閉側邊選單</string>
     <string name="navigation_drawer_open">開側邊選單</string>
 
+    <string name="navigation_menu_label_record">紀錄</string>
+    <string name="navigation_menu_label_Other">其他</string>
+
+    <string name="navigation_menu_OnOff">啟動/關閉</string>
+    <string name="navigation_menu_model_build">手/自動模式</string>
     <string name="navigation_menu_record">查看紀錄</string>
-    <string name="navigation_menu_model_build">模式設定</string>
     <string name="navigation_menu_save">儲存</string>
     <string name="navigation_menu_export">匯出</string>
     <string name="navigation_menu_exit">離開APP</string>
     <string name="navigation_menu_share">分享APP</string>
     <string name="navigation_menu_send">回報問題</string>
+
+    <string name="tempUnit">°C</string>
+    <string name="temp_beans">豆溫</string>
+    <string name="power_on">On</string>
+    <string name="power_off">Off</string>
+    <string name="model_manual">手動</string>
+    <string name="model_auto">自動</string>
 </resources>

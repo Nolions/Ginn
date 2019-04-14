@@ -21,6 +21,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.widget.SwitchCompat;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -30,6 +31,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.CompoundButton;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -176,6 +178,7 @@ public class MainFragment extends Fragment implements
     private void initView() {
 
         initToolbar();
+        initNavigationView();
         initLineChart();
     }
 
@@ -201,8 +204,36 @@ public class MainFragment extends Fragment implements
         mDrawerLayout.addDrawerListener(toggle);
         toggle.syncState();
 
+
+    }
+
+    public void initNavigationView() {
         NavigationView navigationView = (NavigationView) mView.findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        SwitchCompat statusDrawerSwitch = (SwitchCompat) navigationView.getMenu().findItem(R.id.nav_OnOff).getActionView();
+        statusDrawerSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    Log.d(info.TAG(), "statusDrawerSwitch is checked");
+                } else {
+                    Log.d(info.TAG(), "statusDrawerSwitch isn't checked");
+                }
+            }
+        });
+
+        SwitchCompat modelDrawerSwitch = (SwitchCompat) navigationView.getMenu().findItem(R.id.nav_model_sel).getActionView();
+        modelDrawerSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    Log.d(info.TAG(), "modelDrawerSwitch is checked");
+                } else {
+                    Log.d(info.TAG(), "modelDrawerSwitch isn't checked");
+                }
+            }
+        });
     }
 
     @Override
@@ -294,12 +325,12 @@ public class MainFragment extends Fragment implements
                 Log.d(info.TAG(), "onClick nav Exit item");
                 exitAPP();
                 break;
-            case R.id.nav_share:
-                Log.d(info.TAG(), "onClick nav Share item");
-                break;
-            case R.id.nav_send:
-                Log.d(info.TAG(), "onClick nav Send item");
-                break;
+//            case R.id.nav_share:
+//                Log.d(info.TAG(), "onClick nav Share item");
+//                break;
+//            case R.id.nav_send:
+//                Log.d(info.TAG(), "onClick nav Send item");
+//                break;
         }
 
         mDrawerLayout.closeDrawer(GravityCompat.START);
