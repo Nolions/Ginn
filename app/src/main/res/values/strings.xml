@@ -48,4 +48,10 @@
     <string name="power_off">Off</string>
     <string name="model_manual">手動</string>
     <string name="model_auto">自動</string>
+
+    <!-- export file-->
+    <string name="export">紀錄匯出</string>
+    <string name="exporting">紀錄匯出中請稍候...</string>
+    <string name="export_success">紀錄已成功匯出</string>
+    <string name="export_fail">紀錄匯出失敗</string>
 </resources>

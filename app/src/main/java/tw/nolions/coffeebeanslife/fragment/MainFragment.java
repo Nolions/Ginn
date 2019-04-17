@@ -12,6 +12,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.NonNull;
@@ -43,10 +44,13 @@ import tw.nolions.coffeebeanslife.Singleton;
 import tw.nolions.coffeebeanslife.databinding.FragmentMainBinding;
 
 import com.github.mikephil.charting.charts.LineChart;
+import com.opencsv.CSVWriter;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
@@ -56,6 +60,7 @@ import java.util.Set;
 
 import tw.nolions.coffeebeanslife.R;
 import tw.nolions.coffeebeanslife.service.BluetoothAcceptService;
+import tw.nolions.coffeebeanslife.service.ExportToCSV;
 import tw.nolions.coffeebeanslife.viewModel.MainViewModel;
 import tw.nolions.coffeebeanslife.widget.BluetoothDeviceAdapter;
 import tw.nolions.coffeebeanslife.widget.MPChart;
@@ -107,20 +112,30 @@ public class MainFragment extends Fragment implements
     private void init() {
         mDeviceListAdapter = new BluetoothDeviceAdapter(getContext());
 
-        initBluetooth();
+        // 檢查裝置是否支援藍牙
+        bluetoothSupport();
+        // 請求權限
+        grantedPermission();
 
         initHandler();
     }
 
-    private void initBluetooth() {
+    private void grantedPermission() {
+        ActivityCompat.requestPermissions(getActivity(),
+                new String[]{
+                        Manifest.permission.ACCESS_COARSE_LOCATION,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+                        Manifest.permission.READ_EXTERNAL_STORAGE
+                },
+                info.PermissionsRequestAccessLocationCode()
+        );
+    }
+
+
+    private void bluetoothSupport() {
         if (Singleton.getInstance().getBLEAdapter() == null) {
             Toast.makeText(getContext(), getResources().getString(R.string.noSupportBluetooth), Toast.LENGTH_LONG).show();
         }
-
-        ActivityCompat.requestPermissions(getActivity(),
-                new String[]{Manifest.permission.ACCESS_COARSE_LOCATION},
-                info.PermissionsRequestAccessLocationCode()
-        );
     }
 
     private void initHandler() {
@@ -320,6 +335,21 @@ public class MainFragment extends Fragment implements
                 break;
             case R.id.nav_export:
                 Log.d(info.TAG(), "onClick nav Export item");
+                new ExportToCSV(getContext()).execute();
+//                try {
+//                    File exportDir = new File(Environment.getExternalStorageDirectory(), "");
+//                    File file = new File(exportDir, "aaa" + ".csv");
+//                    CSVWriter writer = new CSVWriter(new FileWriter(file));
+////                    Hd = HDWDBHelper.fetchAllOrders();
+////                    startManagingCursor(HdwOrderCursor);
+//                    String[] entries = "first#second#third".split("#");
+//                    writer.writeNext(entries);
+//                    writer.close();
+//                    Log.e(info.TAG(), "ssss");
+//                }catch (IOException e){
+//                    Log.e(info.TAG(), e.getMessage());
+//                }
+
                 break;
             case R.id.nav_exit:
                 Log.d(info.TAG(), "onClick nav Exit item");
