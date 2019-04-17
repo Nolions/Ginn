@@ -12,7 +12,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.NonNull;
@@ -44,13 +43,10 @@ import tw.nolions.coffeebeanslife.Singleton;
 import tw.nolions.coffeebeanslife.databinding.FragmentMainBinding;
 
 import com.github.mikephil.charting.charts.LineChart;
-import com.opencsv.CSVWriter;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
@@ -87,15 +83,16 @@ public class MainFragment extends Fragment implements
     private MPChart mChart;
     private BluetoothDeviceAdapter mDeviceListAdapter;
 
-
-    // data
-    private Set<BluetoothDevice> mPairedDevices;
-
     // handler
     private Handler mConnHandler;
     private Handler mReadHandler;
 
     private DrawerLayout mDrawerLayout;
+
+    // data
+    private Set<BluetoothDevice> mPairedDevices;
+    private Long mStartTime = 0L;
+    private HashMap<String, String> mTempRecord;
 
     @NonNull
     public static MainFragment newInstance() {
@@ -111,6 +108,7 @@ public class MainFragment extends Fragment implements
 
     private void init() {
         mDeviceListAdapter = new BluetoothDeviceAdapter(getContext());
+        mTempRecord = new HashMap<>();
 
         // 檢查裝置是否支援藍牙
         bluetoothSupport();
@@ -218,8 +216,6 @@ public class MainFragment extends Fragment implements
 
         mDrawerLayout.addDrawerListener(toggle);
         toggle.syncState();
-
-
     }
 
     public void initNavigationView() {
@@ -335,20 +331,10 @@ public class MainFragment extends Fragment implements
                 break;
             case R.id.nav_export:
                 Log.d(info.TAG(), "onClick nav Export item");
-                new ExportToCSV(getContext()).execute();
-//                try {
-//                    File exportDir = new File(Environment.getExternalStorageDirectory(), "");
-//                    File file = new File(exportDir, "aaa" + ".csv");
-//                    CSVWriter writer = new CSVWriter(new FileWriter(file));
-////                    Hd = HDWDBHelper.fetchAllOrders();
-////                    startManagingCursor(HdwOrderCursor);
-//                    String[] entries = "first#second#third".split("#");
-//                    writer.writeNext(entries);
-//                    writer.close();
-//                    Log.e(info.TAG(), "ssss");
-//                }catch (IOException e){
-//                    Log.e(info.TAG(), e.getMessage());
-//                }
+                mTempRecord.put("1", "12.1");
+                mTempRecord.put("2", "12.1");
+                mTempRecord.put("3", "12.1");
+                new ExportToCSV(getContext()).execute(mTempRecord);
 
                 break;
             case R.id.nav_exit:
@@ -380,7 +366,19 @@ public class MainFragment extends Fragment implements
         mMainViewModel.updateTemp(data);
 
         String bean = Convert.DecimalPoint((Double)data.get("b"));
-        mChart.addEntry(0, Float.parseFloat(bean));
+
+        if (mStartTime == 0L) {
+            mStartTime = System.currentTimeMillis()/1000;
+        }
+
+        Long sec = 1L;
+        if (System.currentTimeMillis()/1000 - mStartTime != 0) {
+            sec = System.currentTimeMillis()/1000 - mStartTime;
+        }
+        //TODO
+
+//        mTempRecord.put(Long.toString(sec), Float.parseFloat(bean));
+        mChart.addEntry(0, Float.parseFloat(bean), sec);
     }
 
     /**

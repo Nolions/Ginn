@@ -13,12 +13,15 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 
 import tools.info;
 import tw.nolions.coffeebeanslife.R;
 
-public class ExportToCSV extends AsyncTask<Void, Boolean, Boolean> {
+public class ExportToCSV extends AsyncTask<HashMap<String, String>, Boolean, Boolean> {
     Context context;
     ProgressDialog dialog;
 
@@ -38,7 +41,7 @@ public class ExportToCSV extends AsyncTask<Void, Boolean, Boolean> {
     }
 
     @Override
-    protected Boolean doInBackground(Void... params) {
+    protected Boolean doInBackground(HashMap<String, String>... params) {
         try {
             Thread.sleep(2000);
         } catch (InterruptedException e) {
@@ -57,8 +60,22 @@ public class ExportToCSV extends AsyncTask<Void, Boolean, Boolean> {
         try {
             file.createNewFile();
             CSVWriter csvWrite = new CSVWriter(new FileWriter(file));
-            String[] entries = "first#second#third".split("#");
-            csvWrite.writeNext(entries);
+            String[] field = new String[]{
+                    "時間",
+                    context.getString(R.string.temp_beans),
+                    context.getString(R.string.temp_stove),
+                    context.getString(R.string.temp_environment),
+            };
+            csvWrite.writeNext(field);
+
+            for(int i = 0; i< params.length; i++) {
+                HashMap<String, String> param = params[i];
+                for(String key: param.keySet()) {
+
+                    csvWrite.writeNext(new String[]{key, param.get(key)});
+                }
+            }
+
             csvWrite.close();
 
             return true;
