@@ -9,19 +9,27 @@ import android.widget.Toast;
 
 import com.opencsv.CSVWriter;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 import tools.info;
 import tw.nolions.coffeebeanslife.R;
 
-public class ExportToCSV extends AsyncTask<HashMap<String, String>, Boolean, Boolean> {
+public class ExportToCSV extends AsyncTask<HashMap<Long, JSONObject>, Boolean, Boolean> {
     Context context;
     ProgressDialog dialog;
 
@@ -41,7 +49,7 @@ public class ExportToCSV extends AsyncTask<HashMap<String, String>, Boolean, Boo
     }
 
     @Override
-    protected Boolean doInBackground(HashMap<String, String>... params) {
+    protected Boolean doInBackground(HashMap<Long, JSONObject>... params) {
         try {
             Thread.sleep(2000);
         } catch (InterruptedException e) {
@@ -61,7 +69,7 @@ public class ExportToCSV extends AsyncTask<HashMap<String, String>, Boolean, Boo
             file.createNewFile();
             CSVWriter csvWrite = new CSVWriter(new FileWriter(file));
             String[] field = new String[]{
-                    "時間",
+                    context.getString(R.string.export_time),
                     context.getString(R.string.temp_beans),
                     context.getString(R.string.temp_stove),
                     context.getString(R.string.temp_environment),
@@ -69,15 +77,24 @@ public class ExportToCSV extends AsyncTask<HashMap<String, String>, Boolean, Boo
             csvWrite.writeNext(field);
 
             for(int i = 0; i< params.length; i++) {
-                HashMap<String, String> param = params[i];
-                for(String key: param.keySet()) {
+                Map<Long, JSONObject> param = new TreeMap<Long, JSONObject>(params[i]);
+                for(Long key: param.keySet()) {
+                    JSONObject jsonObject = param.get(key);
+                    try {
+                        String[] data = new String[]{
+                                String.valueOf(key),
+                                jsonObject.getString("b"),
+                                jsonObject.getString("s"),
+                                jsonObject.getString("e"),
+                        };
+                        csvWrite.writeNext(data);
+                    } catch (JSONException e) {
+                        Log.e(info.TAG(), "ExportToCSV::doInBackground(), JSONException error: " + e.getMessage());
+                    }
 
-                    csvWrite.writeNext(new String[]{key, param.get(key)});
                 }
             }
-
             csvWrite.close();
-
             return true;
         } catch (IOException e) {
             Log.e(info.TAG(),"ExportToCSV::doInBackground(), IOException error : " + e.getMessage());

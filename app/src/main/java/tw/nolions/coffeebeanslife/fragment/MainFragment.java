@@ -92,7 +92,7 @@ public class MainFragment extends Fragment implements
     // data
     private Set<BluetoothDevice> mPairedDevices;
     private Long mStartTime = 0L;
-    private HashMap<String, String> mTempRecord;
+    private HashMap<Long, JSONObject> mTempRecord;
 
     @NonNull
     public static MainFragment newInstance() {
@@ -150,8 +150,7 @@ public class MainFragment extends Fragment implements
                     mToolBar.setTitle(getContext().getString(R.string.app_name) +  " " + device.getName() + " 連線中...");
                     mChart.description("裝置連線，等待資料中...");
 
-
-                    Log.d(info.TAG(), data);
+                    Log.d(info.TAG(), "MainFragment::initHandler, mConnHandler data: " + data);
                     read();
                 } else {
 
@@ -164,16 +163,9 @@ public class MainFragment extends Fragment implements
             @Override
             public void handleMessage(Message msg) {
                 super.handleMessage(msg);
-                try {
-                    String data = (String) msg.obj;
-                    JSONObject jsonObject = new JSONObject(data);
-
-                    HashMap<String, Object>  map = tools.Convert.toMap(jsonObject);
-                    updateTemp(map);
-                } catch (JSONException e) {
-                    Log.e(info.TAG(), "error :  " + e.getMessage());
-                }
-
+                String data = (String) msg.obj;
+                Log.d(info.TAG(), "MainFragment::initHandler, mReadHandler data: " + data);
+                updateTemp(data);
             }
         };
     }
@@ -227,9 +219,9 @@ public class MainFragment extends Fragment implements
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
-                    Log.d(info.TAG(), "statusDrawerSwitch is checked");
+                    Log.d(info.TAG(), "MainFragment::initNavigationView(), statusDrawerSwitch is checked");
                 } else {
-                    Log.d(info.TAG(), "statusDrawerSwitch isn't checked");
+                    Log.d(info.TAG(), "MainFragment::initNavigationView(), statusDrawerSwitch isn't checked");
                 }
             }
         });
@@ -239,9 +231,9 @@ public class MainFragment extends Fragment implements
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked) {
-                    Log.d(info.TAG(), "modelDrawerSwitch is checked");
+                    Log.d(info.TAG(), "MainFragment::initNavigationView(), modelDrawerSwitch is checked");
                 } else {
-                    Log.d(info.TAG(), "modelDrawerSwitch isn't checked");
+                    Log.d(info.TAG(), "MainFragment::initNavigationView(), modelDrawerSwitch isn't checked");
                 }
             }
         });
@@ -283,7 +275,7 @@ public class MainFragment extends Fragment implements
 
     @Override
     public boolean onOptionsItemSelected(MenuItem menuItem) {
-        Log.d(info.TAG(), "onClick Options menu item...");
+        Log.d(info.TAG(), "MainFragment::onOptionsItemSelected(), onClick Options menu item...");
         switch (menuItem.getItemId()) {
             case R.id.action_conn:
                 getPairedDevices();
@@ -321,31 +313,28 @@ public class MainFragment extends Fragment implements
 
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
-        Log.e(info.TAG(), "onClick Navigation menu item...");
+        Log.d(info.TAG(), "MainFragment::onNavigationItemSelected(), onClick Navigation menu item...");
         switch (item.getItemId()) {
             case R.id.nav_record:
-                Log.d(info.TAG(), "onClick nav Record item");
+                Log.d(info.TAG(), "MainFragment::onNavigationItemSelected(), onClick nav Record item");
                 break;
             case R.id.nav_save:
-                Log.d(info.TAG(), "onClick nav Save item");
+                Log.d(info.TAG(), "MainFragment::onNavigationItemSelected(), onClick nav Save item");
                 break;
             case R.id.nav_export:
-                Log.d(info.TAG(), "onClick nav Export item");
-                mTempRecord.put("1", "12.1");
-                mTempRecord.put("2", "12.1");
-                mTempRecord.put("3", "12.1");
+                Log.d(info.TAG(), "MainFragment::onNavigationItemSelected(), onClick nav Export item");
                 new ExportToCSV(getContext()).execute(mTempRecord);
 
                 break;
             case R.id.nav_exit:
-                Log.d(info.TAG(), "onClick nav Exit item");
+                Log.d(info.TAG(), "MainFragment::onNavigationItemSelected(), onClick nav Exit item");
                 exitAPP();
                 break;
 //            case R.id.nav_share:
-//                Log.d(info.TAG(), "onClick nav Share item");
+//                Log.d(info.TAG(), "MainFragment::onNavigationItemSelected(), onClick nav Share item");
 //                break;
 //            case R.id.nav_send:
-//                Log.d(info.TAG(), "onClick nav Send item");
+//                Log.d(info.TAG(), "MainFragment::onNavigationItemSelected(), onClick nav Send item");
 //                break;
         }
 
@@ -355,37 +344,41 @@ public class MainFragment extends Fragment implements
 
     private boolean checkBluetoothConn() {
         if (Singleton.getInstance().getBLEDevice() == null && Singleton.getInstance().getBLESocket() == null) {
-            Log.d(info.TAG(), "no device connection");
+            Log.d(info.TAG(), "MainFragment::checkBluetoothConn(), no device connection");
             return false;
         }
 
         return true;
     }
 
-    private void updateTemp(HashMap data) {
-        mMainViewModel.updateTemp(data);
+    private void updateTemp(String data) {
+        try {
+            JSONObject jsonObject = new JSONObject(data);
 
-        String bean = Convert.DecimalPoint((Double)data.get("b"));
+            HashMap<String, Object>  map = tools.Convert.toMap(jsonObject);
+            mMainViewModel.updateTemp(map);
+            String bean = Convert.DecimalPoint((Double)map.get("b"));
+            if (mStartTime == 0L) {
+                mStartTime = System.currentTimeMillis()/1000;
+            }
 
-        if (mStartTime == 0L) {
-            mStartTime = System.currentTimeMillis()/1000;
+            Long sec = 1L;
+            if (System.currentTimeMillis()/1000 - mStartTime != 0) {
+                sec = System.currentTimeMillis()/1000 - mStartTime;
+            }
+
+            mTempRecord.put(sec, jsonObject);
+            mChart.addEntry(0, Float.parseFloat(bean), sec);
+        } catch (JSONException e) {
+            Log.e(info.TAG(), "MainFragment::updateTemp(), error :  " + e.getMessage());
         }
-
-        Long sec = 1L;
-        if (System.currentTimeMillis()/1000 - mStartTime != 0) {
-            sec = System.currentTimeMillis()/1000 - mStartTime;
-        }
-        //TODO
-
-//        mTempRecord.put(Long.toString(sec), Float.parseFloat(bean));
-        mChart.addEntry(0, Float.parseFloat(bean), sec);
     }
 
     /**
      * 讀取從藍牙裝置傳送資料
      */
     private void read() {
-        Log.d(info.TAG(), "read...");
+        Log.d(info.TAG(), "MainFragment::read()");
         Thread t = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -407,7 +400,7 @@ public class MainFragment extends Fragment implements
 
                                     // Now send fullMessage
                                     // Send the obtained bytes to the UI Activity
-                                    Log.d(info.TAG(), fullMessage);
+                                    Log.d(info.TAG(), "MainFragment::read(), data:" + fullMessage);
                                     Message msg = new Message();
                                     msg.obj = fullMessage;
 
@@ -415,12 +408,12 @@ public class MainFragment extends Fragment implements
                                 }
                             }
                         } catch (IOException e) {
-                            Log.d(info.TAG(), "Error: " + e.getMessage());
+                            Log.d(info.TAG(), "MainFragment::read(), IOException Error: " + e.getMessage());
                             break;
                         }
                     }
                 } catch (Exception e) {
-                    Log.e(info.TAG(), "Error: " + e.getMessage());
+                    Log.e(info.TAG(), "MainFragment::read(), Exception Error: " + e.getMessage());
                 }
             }
         });
@@ -431,9 +424,8 @@ public class MainFragment extends Fragment implements
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.d(info.TAG(), "TEST");
             String action = intent.getAction();
-            Log.d(info.TAG(), "BLE Connection stat:" + action);
+            Log.d(info.TAG(), "MainFragment::mReceiver, BLE Connection stat:" + action);
 
             if (action.equals(BluetoothDevice.ACTION_FOUND))  //收到bluetooth狀態改變
             {
@@ -468,7 +460,7 @@ public class MainFragment extends Fragment implements
      */
     private void  getPairedDevices() {
         mPairedDevices = Singleton.getInstance().getBLEAdapter().getBondedDevices();
-        Log.e(info.TAG(), ""+mPairedDevices.size());
+        Log.d(info.TAG(), "MainFragment::getPairedDevices(), Paired Devices size"+mPairedDevices.size());
         ArrayList<BluetoothDevice> list = new ArrayList<>();
         for(BluetoothDevice device : mPairedDevices) {
             list.add(device);
@@ -483,7 +475,7 @@ public class MainFragment extends Fragment implements
     private ListView.OnItemClickListener listener = new ListView.OnItemClickListener(){
         @Override
         public void onItemClick(AdapterView<?> arg0, View arg1, int position, long arg3) {
-            Log.d(info.TAG(), "item :" + position);
+            Log.d(info.TAG(), "MainFragment::listener, item :" + position);
             final int p = position;
             Thread t = new Thread(new Runnable() {
                 @Override
@@ -512,12 +504,12 @@ public class MainFragment extends Fragment implements
 
                                 msg.obj = "device " + device.getName() + " Connection success";
                             } catch (Exception e) {
-                                Log.e(info.TAG(), "error : " + e.getMessage());
+                                Log.e(info.TAG(), "MainFragment::listener, Exception error : " + e.getMessage());
                                 msg.obj = "device " + device.getName() + " Connection fail";
                             }
                         }
                     } catch (IOException ioe) {
-                        Log.e(info.TAG(), "error : " + ioe.getMessage());
+                        Log.e(info.TAG(), "MainFragment::listener, IOException error : " + ioe.getMessage());
                         msg.obj = "device " + device.getName() + " Connection fail";
                     }
 

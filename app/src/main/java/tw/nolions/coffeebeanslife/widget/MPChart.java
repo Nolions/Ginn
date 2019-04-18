@@ -67,7 +67,7 @@ public class MPChart implements OnChartValueSelectedListener {
 
     /**
      * setting chart's describe
-     * @param String  describe
+     * @param String describe
      */
     public void description(String describe) {
         this.mLineChart.setNoDataText(describe);
@@ -181,7 +181,7 @@ public class MPChart implements OnChartValueSelectedListener {
      * @param int lineIndex
      * @param float value
      */
-    public void addEntry(int lineIndex, float value) {
+    public void addEntry(int lineIndex, float value, Long sec) {
         LineData data = this.mLineChart.getLineData();
 
         if (data == null) {
@@ -201,10 +201,10 @@ public class MPChart implements OnChartValueSelectedListener {
             set = this.initLineDataSet(name, entries);
             data.addDataSet(set);
         }
-        Long sec = 1L;
-        if (System.currentTimeMillis()/1000 - mStartTime != 0) {
-            sec = System.currentTimeMillis()/1000 - mStartTime;
-        }
+//        Long sec = 1L;
+//        if (System.currentTimeMillis()/1000 - mStartTime != 0) {
+//            sec = System.currentTimeMillis()/1000 - mStartTime;
+//        }
         mXAixData.add(sec);
 
         // choose a random dataSet

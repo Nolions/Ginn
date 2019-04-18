@@ -55,9 +55,10 @@ public class MainViewModel extends ViewModel {
             public void handleMessage(Message msg) {
                 super.handleMessage(msg);
                 String data = (String) msg.obj;
-                Log.d(info.TAG(), "Send msg is " + data);
+                Log.d(info.TAG(), "MainViewModel::initHandler(), Send msg is " + data);
                 try {
                     if (data.equals("c") || data.equals("o")) {
+                        // 設定繼電器狀態
                         if (isImport.get() == true) {
                             mOutputStream.write("o".getBytes());
                             isImport.set(false);
@@ -67,6 +68,7 @@ public class MainViewModel extends ViewModel {
                             isImport.set(true);
                         }
                     } else if(data.equals("add")) {
+                        // 設定目標溫度
                         addTemp();
                         String temp = ""+ getNowSetTemp();
                         mOutputStream.write(temp.getBytes());
@@ -114,8 +116,7 @@ public class MainViewModel extends ViewModel {
     }
 
     public void onClickTempPlusActionButton() {
-        Log.d(info.TAG(), "onclick TempPlusActionButton...");
-
+        Log.d(info.TAG(), "MainViewModel::onClickTempPlusActionButton()");
         Thread t = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -130,7 +131,7 @@ public class MainViewModel extends ViewModel {
     }
 
     public void onClickTempLessActionButton() {
-        Log.d(info.TAG(), "onclick TempLessActionButton...");
+        Log.d(info.TAG(), "MainViewModel::onClickTempLessActionButton()");
 
         Thread t = new Thread(new Runnable() {
             @Override
@@ -146,7 +147,7 @@ public class MainViewModel extends ViewModel {
     }
 
     public void onClickBeanImportActionButton() {
-        Log.d(info.TAG(), "onclick BeanImportActionButton...");
+        Log.d(info.TAG(), "MainViewModel::onClickBeanImportActionButton()");
 
         if (isImport.get() == true) {
             relayStatus = "c";
@@ -168,11 +169,11 @@ public class MainViewModel extends ViewModel {
     }
 
     public void onClickOneBoom() {
-        Log.d(info.TAG(), "One Boom...");
+        Log.d(info.TAG(), "MainViewModel::onClickOneBoom()");
     }
 
     public void onClickTwoBoom() {
-        Log.d(info.TAG(), "Two Boom...");
+        Log.d(info.TAG(), "MainViewModel::onClickTwoBoom()");
     }
 
     private void addTemp() {
@@ -208,5 +209,4 @@ public class MainViewModel extends ViewModel {
         setStoveTemp(stove);
         setEnvironmentTemp(environment);
     }
-
 }
