@@ -75,6 +75,7 @@ public class MainFragment extends Fragment implements
     private LineChart mLineChart;
     private ListView mDeviceListView;
     private AlertDialog alertDialog;
+    private AlertDialog.Builder builder;
 
     // view model
     private MainViewModel mMainViewModel;
@@ -241,7 +242,7 @@ public class MainFragment extends Fragment implements
         modelDrawerSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                String data;
+                final String data;
                 // 控制烘豆機為手動或自動模式
                 if (isChecked) {
                     Log.d(info.TAG(), "MainFragment::initNavigationView(), modelDrawerSwitch: Manual model");
@@ -251,6 +252,15 @@ public class MainFragment extends Fragment implements
                     data = "a\r";
                 }
                 bluetoothWrite(data);
+                Thread t = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        final String d = data;
+                        bluetoothWrite(d);
+                    }
+                });
+
+                t.start();
             }
         });
     }
@@ -306,6 +316,7 @@ public class MainFragment extends Fragment implements
                 builder.setIcon(R.drawable.ic_bluetooth_black);
                 builder.setTitle(R.string.selectBluetoothDevice);
                 builder.setCancelable(false);
+
                 builder.setPositiveButton(R.string.cancel, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
@@ -388,17 +399,16 @@ public class MainFragment extends Fragment implements
         if (Singleton.getInstance().getBLEDevice() != null && this.getActionStart()) {
             Log.e("tet", "tes:" + action);
             mMainViewModel.setIsImport(action);
-            String operationCode = action? "o\r" : "c\r";
-            bluetoothWrite(operationCode);
-//            Thread t = new Thread(new Runnable() {
-//                @Override
-//                public void run() {
-//                    String operationCode = action? "c" : "0";
-//
-//                }
-//            });
-//
-//            t.start();
+
+            Thread t = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    String operationCode = action? "o\r" : "c\r";
+                    bluetoothWrite(operationCode);
+                }
+            });
+
+            t.start();
         }
 
     }
@@ -549,6 +559,7 @@ public class MainFragment extends Fragment implements
         @Override
         public void onItemClick(AdapterView<?> arg0, View arg1, int position, long arg3) {
             Log.d(info.TAG(), "MainFragment::listener, item :" + position);
+            alertDialog.dismiss();
             final int p = position;
             Thread t = new Thread(new Runnable() {
                 @Override
@@ -556,6 +567,9 @@ public class MainFragment extends Fragment implements
                     Message msg = Message.obtain();
                     BluetoothDevice device= mDeviceListAdapter.getDevice(p);
                     Singleton.getInstance().setBLEDevice(device);
+
+                    closeBTEConnection();
+
                     try {
                         Singleton.getInstance().setBLESocket(device.createRfcommSocketToServiceRecord(info.BluetoothUUID()));
 
@@ -591,6 +605,39 @@ public class MainFragment extends Fragment implements
             t.start();
         }
     };
+
+    private void closeBTEConnection()
+    {
+        Log.d(info.TAG(), "MainFragment::closeBTEConnection");
+
+        if (mInputStream != null) {
+            try {
+                mInputStream.close();
+            } catch (Exception e) {
+                Log.e(info.TAG(), "MainFragment::closeBTEConnection, bluetooth InputStream close Exception error : " + e.getMessage());
+            }
+            mInputStream = null;
+        }
+
+        if (mOutputStream != null) {
+            try {
+                mOutputStream.close();
+            } catch(Exception e) {
+                Log.e(info.TAG(), "MainFragment::closeBTEConnection, bluetooth OutputStream close Exception error : " + e.getMessage());
+            }
+            mOutputStream = null;
+        }
+
+        if (Singleton.getInstance().getBLESocket() != null) {
+            try {
+                Singleton.getInstance().getBLESocket().close();
+            } catch (Exception e) {
+                Log.e(info.TAG(), "MainFragment::closeBTEConnection, bluetooth socket close Exception error : " + e.getMessage());
+            }
+
+            Singleton.getInstance().setBLESocket(null);
+        }
+    }
 
     private void exitAPP() {
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getContext());
