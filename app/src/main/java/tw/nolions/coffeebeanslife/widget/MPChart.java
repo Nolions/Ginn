@@ -97,7 +97,7 @@ public class MPChart implements OnChartValueSelectedListener {
      */
     public void touchGestures() {
         // enable touch gestures
-        this.mLineChart.setTouchEnabled(false);
+        this.mLineChart.setTouchEnabled(true);
 
         // if disabled, scaling can be done on x- and y-axis separately
         this.mLineChart.setPinchZoom(false);
@@ -217,7 +217,13 @@ public class MPChart implements OnChartValueSelectedListener {
         // let the chart know it's data has changed
         this.setChange();
 
-        this.mLineChart.setVisibleXRangeMaximum(6);
-        this.mLineChart.moveViewTo(data.getEntryCount() - 7, 50f, YAxis.AxisDependency.LEFT);
+        // TODO
+        this.mLineChart.setVisibleXRangeMaximum(data.getEntryCount());
+        this.mLineChart.moveViewTo(data.getEntryCount(), 50f, YAxis.AxisDependency.LEFT);
+    }
+
+    public void saveToImage(String fileName)
+    {
+        mLineChart.saveToPath(fileName, "");
     }
 }

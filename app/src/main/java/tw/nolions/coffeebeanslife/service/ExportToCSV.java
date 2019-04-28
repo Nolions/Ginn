@@ -15,26 +15,21 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 
 import tools.info;
 import tw.nolions.coffeebeanslife.R;
 
 public class ExportToCSV extends AsyncTask<HashMap<Long, JSONObject>, Boolean, Boolean> {
-    Context context;
-    ProgressDialog dialog;
+    private Context context;
+    private ProgressDialog dialog;
+    private String fileName;
 
-    public ExportToCSV(Context context) {
+    public ExportToCSV(Context context, String fileName) {
         this.context = context;
+        this.fileName = fileName;
     }
 
     @Override
@@ -61,9 +56,7 @@ public class ExportToCSV extends AsyncTask<HashMap<Long, JSONObject>, Boolean, B
             exportDir.mkdirs();
         }
 
-        Date date = new Date(System.currentTimeMillis());
-        String filename = new SimpleDateFormat("yyyyMMddhhmmss").format(date);
-        File file = new File(exportDir, "coffee" + filename + ".csv");
+        File file = new File(exportDir, "coffee" + this.fileName + ".csv");
 
         try {
             file.createNewFile();

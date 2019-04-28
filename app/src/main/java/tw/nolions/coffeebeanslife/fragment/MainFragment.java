@@ -52,7 +52,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Set;
 
@@ -75,7 +77,6 @@ public class MainFragment extends Fragment implements
     private LineChart mLineChart;
     private ListView mDeviceListView;
     private AlertDialog alertDialog;
-    private AlertDialog.Builder builder;
 
     // view model
     private MainViewModel mMainViewModel;
@@ -351,7 +352,10 @@ public class MainFragment extends Fragment implements
 //                break;
             case R.id.nav_export:
                 Log.d(info.TAG(), "MainFragment::onNavigationItemSelected(), onClick nav Export item");
-                new ExportToCSV(getContext()).execute(mTempRecord);
+                Date date = new Date(System.currentTimeMillis());
+                String filename = new SimpleDateFormat("yyyyMMddhhmmss").format(date);
+                mChart.saveToImage(filename);
+                new ExportToCSV(getContext(), filename).execute(mTempRecord);
 
                 break;
             case R.id.nav_exit:
