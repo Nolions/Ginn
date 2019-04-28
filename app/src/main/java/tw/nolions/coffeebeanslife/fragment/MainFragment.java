@@ -40,6 +40,7 @@ import tools.Convert;
 import tools.info;
 import tw.nolions.coffeebeanslife.MainActivity;
 import tw.nolions.coffeebeanslife.Singleton;
+import tw.nolions.coffeebeanslife.callback.ViewModelCallback;
 import tw.nolions.coffeebeanslife.databinding.FragmentMainBinding;
 
 import com.github.mikephil.charting.charts.LineChart;
@@ -49,6 +50,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -63,7 +65,10 @@ import tw.nolions.coffeebeanslife.widget.MPChart;
 
 public class MainFragment extends Fragment implements
         Toolbar.OnCreateContextMenuListener,
-        NavigationView.OnNavigationItemSelectedListener {
+        NavigationView.OnNavigationItemSelectedListener,
+        ViewModelCallback
+{
+
     // UI Widget
     private View mView;
     private Toolbar mToolBar;
@@ -76,7 +81,7 @@ public class MainFragment extends Fragment implements
     private FragmentMainBinding mBinding;
 
     // bluetooth
-//    private OutputStream mOutputStream;
+    private OutputStream mOutputStream;
     private InputStream mInputStream;
 
     // widget
@@ -93,6 +98,7 @@ public class MainFragment extends Fragment implements
     private Set<BluetoothDevice> mPairedDevices;
     private Long mStartTime = 0L;
     private HashMap<Long, JSONObject> mTempRecord;
+    private Boolean mActionStart = false;
 
     @NonNull
     public static MainFragment newInstance() {
@@ -166,6 +172,7 @@ public class MainFragment extends Fragment implements
                 String data = (String) msg.obj;
                 Log.d(info.TAG(), "MainFragment::initHandler, mReadHandler data: " + data);
                 updateTemp(data);
+
             }
         };
     }
@@ -210,6 +217,7 @@ public class MainFragment extends Fragment implements
         toggle.syncState();
     }
 
+
     public void initNavigationView() {
         NavigationView navigationView = (NavigationView) mView.findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
@@ -218,10 +226,13 @@ public class MainFragment extends Fragment implements
         statusDrawerSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                // 控制接收溫度是否顯示在線圖上
                 if (isChecked) {
-                    Log.d(info.TAG(), "MainFragment::initNavigationView(), statusDrawerSwitch is checked");
+                    Log.d(info.TAG(), "MainFragment::initNavigationView(), statusDrawerSwitch: action start");
+                    setActionStart(true);
                 } else {
-                    Log.d(info.TAG(), "MainFragment::initNavigationView(), statusDrawerSwitch isn't checked");
+                    Log.d(info.TAG(), "MainFragment::initNavigationView(), statusDrawerSwitch: action stop");
+                    setActionStart(false);
                 }
             }
         });
@@ -230,11 +241,16 @@ public class MainFragment extends Fragment implements
         modelDrawerSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                String data;
+                // 控制烘豆機為手動或自動模式
                 if (isChecked) {
-                    Log.d(info.TAG(), "MainFragment::initNavigationView(), modelDrawerSwitch is checked");
+                    Log.d(info.TAG(), "MainFragment::initNavigationView(), modelDrawerSwitch: Manual model");
+                    data = "m\r";
                 } else {
-                    Log.d(info.TAG(), "MainFragment::initNavigationView(), modelDrawerSwitch isn't checked");
+                    Log.d(info.TAG(), "MainFragment::initNavigationView(), modelDrawerSwitch: Auto model");
+                    data = "a\r";
                 }
+                bluetoothWrite(data);
             }
         });
     }
@@ -255,7 +271,8 @@ public class MainFragment extends Fragment implements
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        mMainViewModel = new MainViewModel(getActivity());
+        mMainViewModel = new MainViewModel(this);
+
         mBinding.setMainViewModel(mMainViewModel);
 
         String[] names = new String[]{
@@ -315,12 +332,12 @@ public class MainFragment extends Fragment implements
     public boolean onNavigationItemSelected(MenuItem item) {
         Log.d(info.TAG(), "MainFragment::onNavigationItemSelected(), onClick Navigation menu item...");
         switch (item.getItemId()) {
-            case R.id.nav_record:
-                Log.d(info.TAG(), "MainFragment::onNavigationItemSelected(), onClick nav Record item");
-                break;
-            case R.id.nav_save:
-                Log.d(info.TAG(), "MainFragment::onNavigationItemSelected(), onClick nav Save item");
-                break;
+//            case R.id.nav_record:
+//                Log.d(info.TAG(), "MainFragment::onNavigationItemSelected(), onClick nav Record item");
+//                break;
+//            case R.id.nav_save:
+//                Log.d(info.TAG(), "MainFragment::onNavigationItemSelected(), onClick nav Save item");
+//                break;
             case R.id.nav_export:
                 Log.d(info.TAG(), "MainFragment::onNavigationItemSelected(), onClick nav Export item");
                 new ExportToCSV(getContext()).execute(mTempRecord);
@@ -340,6 +357,60 @@ public class MainFragment extends Fragment implements
 
         mDrawerLayout.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    @Override
+    public void updateTargetTemp(final String temp) {
+        Log.d(info.TAG(), "updateTargetTemp:" +  temp);
+
+        Thread t = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                bluetoothWrite(temp);
+            }
+        });
+
+        t.start();
+    }
+
+    @Override
+    public void firstCrack() {
+
+    }
+
+    @Override
+    public void secondCrack() {
+
+    }
+
+    @Override
+    public void startAction(final boolean action) {
+        if (Singleton.getInstance().getBLEDevice() != null && this.getActionStart()) {
+            Log.e("tet", "tes:" + action);
+            mMainViewModel.setIsImport(action);
+            String operationCode = action? "o\r" : "c\r";
+            bluetoothWrite(operationCode);
+//            Thread t = new Thread(new Runnable() {
+//                @Override
+//                public void run() {
+//                    String operationCode = action? "c" : "0";
+//
+//                }
+//            });
+//
+//            t.start();
+        }
+
+    }
+
+    public void setActionStart(boolean status)
+    {
+        this.mActionStart = status;
+    }
+
+    public boolean getActionStart()
+    {
+        return this.mActionStart;
     }
 
     private boolean checkBluetoothConn() {
@@ -367,8 +438,10 @@ public class MainFragment extends Fragment implements
                 sec = System.currentTimeMillis()/1000 - mStartTime;
             }
 
-            mTempRecord.put(sec, jsonObject);
-            mChart.addEntry(0, Float.parseFloat(bean), sec);
+            if (this.getActionStart()) {
+                mTempRecord.put(sec, jsonObject);
+                mChart.addEntry(0, Float.parseFloat(bean), sec);
+            }
         } catch (JSONException e) {
             Log.e(info.TAG(), "MainFragment::updateTemp(), error :  " + e.getMessage());
         }
@@ -489,7 +562,7 @@ public class MainFragment extends Fragment implements
                         try {
                             Singleton.getInstance().getBLESocket().connect();
                             mInputStream = Singleton.getInstance().getBLESocket().getInputStream();
-                            mMainViewModel.setOutputStream(Singleton.getInstance().getBLESocket().getOutputStream());
+                            mOutputStream = Singleton.getInstance().getBLESocket().getOutputStream();
 
                             msg.obj = "device " + device.getName() + " Connection success";
 
@@ -499,8 +572,6 @@ public class MainFragment extends Fragment implements
                                 Singleton.getInstance().getBLESocket().connect();
 
                                 mInputStream = Singleton.getInstance().getBLESocket().getInputStream();
-                                mMainViewModel.setOutputStream(Singleton.getInstance().getBLESocket().getOutputStream());
-
 
                                 msg.obj = "device " + device.getName() + " Connection success";
                             } catch (Exception e) {
@@ -542,4 +613,21 @@ public class MainFragment extends Fragment implements
         alertDialog = alertDialogBuilder.create();
         alertDialog.show();
     }
+
+    /**
+     * 透過藍芽傳送資料
+     *
+     * @param data 欲傳送的資料內容
+     */
+    private void bluetoothWrite(final String data)
+    {
+        try {
+            mOutputStream.write(data.getBytes());
+        } catch (IOException e) {
+            Log.e(info.TAG(), "error :  " + e.getMessage());
+        }
+    }
 }
+
+
+

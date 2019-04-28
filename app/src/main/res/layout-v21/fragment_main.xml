@@ -53,28 +53,28 @@
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:layout_marginTop="16dp"
-                        android:layout_marginBottom="8dp"
+                        android:layout_marginBottom="35dp"
                         android:visibility="visible"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent" />
 
                 <include
-                    layout="@layout/left_control"
+                    layout="@layout/control_left"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     app:layout_constraintStart_toStartOf="parent"
                     bind:MainViewModel="@{mainViewModel}" />
 
                 <include
-                    layout="@layout/right_control"
+                    layout="@layout/control_right"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     bind:MainViewModel="@{mainViewModel}" />
 
                     <include
-                        layout="@layout/bottom_control"
+                        layout="@layout/control_bottom"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="55dp"
