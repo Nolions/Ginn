@@ -16,7 +16,6 @@
         android:layout_height="wrap_content">
 
         <ImageView
-            android:id="@+id/imageView"
             android:layout_width="30dp"
             android:layout_height="30dp"
             android:alpha="0.6"
@@ -27,7 +26,6 @@
             tools:ignore="VectorDrawableCompat" />
 
         <TextView
-            android:id="@+id/temp_target"
             android:layout_width="40dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
@@ -49,7 +47,6 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <SeekBar
-            android:id="@+id/target_temp_SeekBar"
             android:layout_width="match_parent"
             android:layout_height="30dp"
             android:layout_gravity="center"

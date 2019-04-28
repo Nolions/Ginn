@@ -15,7 +15,6 @@
         android:layout_height="match_parent">
 
         <android.support.design.widget.FloatingActionButton
-            android:id="@+id/bean_import_ActionButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
@@ -30,7 +29,6 @@
             app:srcCompat="@drawable/import_64x64" />
 
         <android.support.design.widget.FloatingActionButton
-            android:id="@+id/bean_export_ActionButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
@@ -45,7 +43,6 @@
             app:srcCompat="@drawable/export_64x64" />
 
         <android.support.design.widget.FloatingActionButton
-            android:id="@+id/BoomOnefloatingActionButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
@@ -61,7 +58,6 @@
             app:fabSize="mini"/>
 
         <android.support.design.widget.FloatingActionButton
-            android:id="@+id/BoonTwofloatingActionButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
