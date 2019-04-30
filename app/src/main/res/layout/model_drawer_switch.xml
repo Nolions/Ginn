@@ -5,6 +5,6 @@
     android:id="@+id/model_drawer_switch"
     android:layout_width="fill_parent"
     android:layout_height="match_parent"
-    android:textOn="@string/model_manual"
-    android:textOff="@string/model_auto"
+    android:textOff="@string/model_manual"
+    android:textOn="@string/model_auto"
     app:showText="true"/>

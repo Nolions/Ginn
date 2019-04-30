@@ -35,7 +35,6 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.CompoundButton;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import tools.Convert;
@@ -771,11 +770,6 @@ public class MainFragment extends Fragment implements
 
     private void alert(String msg) {
         Snackbar.make(mView, msg, Snackbar.LENGTH_SHORT).show();
-//        Toast.makeText(
-//                this.mContext,
-//                msg,
-//                Toast.LENGTH_LONG
-//        ).show();
     }
 }
 
