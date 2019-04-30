@@ -6,16 +6,16 @@
 
     <group android:checkableBehavior="single">
         <item
-            android:id="@+id/nav_OnOff"
-            android:icon="@drawable/ic_menu_power_settings"
-            android:title="@string/navigation_menu_OnOff"
-            app:actionLayout="@layout/ready_drawer_switch" />
-
-        <item
             android:id="@+id/nav_model_sel"
             android:icon="@drawable/ic_menu_build"
             android:title="@string/navigation_menu_model_build"
             app:actionLayout="@layout/model_drawer_switch" />
+
+        <item
+            android:id="@+id/nav_OnOff"
+            android:icon="@drawable/ic_menu_power_settings"
+            android:title="@string/navigation_menu_OnOff"
+            app:actionLayout="@layout/ready_drawer_switch" />
     </group>
 
     <item android:title="@string/navigation_menu_label_record">

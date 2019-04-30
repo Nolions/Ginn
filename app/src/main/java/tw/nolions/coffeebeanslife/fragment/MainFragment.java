@@ -1,6 +1,7 @@
 package tw.nolions.coffeebeanslife.fragment;
 
 import android.Manifest;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
@@ -16,6 +17,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.GravityCompat;
@@ -60,10 +62,11 @@ import java.util.Set;
 
 import tw.nolions.coffeebeanslife.R;
 import tw.nolions.coffeebeanslife.service.BluetoothAcceptService;
-import tw.nolions.coffeebeanslife.service.ExportToCSV;
+import tw.nolions.coffeebeanslife.service.asyncTask.ExportToCSVAsyncTask;
 import tw.nolions.coffeebeanslife.viewModel.MainViewModel;
 import tw.nolions.coffeebeanslife.widget.BluetoothDeviceAdapter;
 import tw.nolions.coffeebeanslife.widget.MPChart;
+import tw.nolions.coffeebeanslife.widget.SmallProgressDialogUtil;
 
 public class MainFragment extends Fragment implements
         Toolbar.OnCreateContextMenuListener,
@@ -76,7 +79,7 @@ public class MainFragment extends Fragment implements
     private Toolbar mToolBar;
     private LineChart mLineChart;
     private ListView mDeviceListView;
-    private AlertDialog alertDialog;
+    private AlertDialog mAlertDialog;
 
     // view model
     private MainViewModel mMainViewModel;
@@ -89,10 +92,12 @@ public class MainFragment extends Fragment implements
     // widget
     private MPChart mChart;
     private BluetoothDeviceAdapter mDeviceListAdapter;
+    private SmallProgressDialogUtil mDeviceConnectionDialog;
 
     // handler
     private Handler mConnHandler;
     private Handler mReadHandler;
+    private Handler mWriteHandler;
 
     private DrawerLayout mDrawerLayout;
 
@@ -101,6 +106,10 @@ public class MainFragment extends Fragment implements
     private Long mStartTime = 0L;
     private HashMap<Long, JSONObject> mTempRecord;
     private Boolean mActionStart = false;
+    private String mModel;
+
+    private Context mContext;
+    private Activity mActivity;
 
     @NonNull
     public static MainFragment newInstance() {
@@ -115,7 +124,12 @@ public class MainFragment extends Fragment implements
     }
 
     private void init() {
-        mDeviceListAdapter = new BluetoothDeviceAdapter(getContext());
+        this.mContext = this.getContext();
+        this.mActivity = this.getActivity();
+
+        mModel = "m";
+
+        mDeviceListAdapter = new BluetoothDeviceAdapter(this.mContext);
         mTempRecord = new HashMap<>();
 
         // 檢查裝置是否支援藍牙
@@ -127,7 +141,7 @@ public class MainFragment extends Fragment implements
     }
 
     private void grantedPermission() {
-        ActivityCompat.requestPermissions(getActivity(),
+        ActivityCompat.requestPermissions(mActivity,
                 new String[]{
                         Manifest.permission.ACCESS_COARSE_LOCATION,
                         Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -140,7 +154,7 @@ public class MainFragment extends Fragment implements
 
     private void bluetoothSupport() {
         if (Singleton.getInstance().getBLEAdapter() == null) {
-            Toast.makeText(getContext(), getResources().getString(R.string.noSupportBluetooth), Toast.LENGTH_LONG).show();
+            alert(getString(R.string.no_support_bluetooth));
         }
     }
 
@@ -151,11 +165,12 @@ public class MainFragment extends Fragment implements
             public void handleMessage(Message msg) {
                 super.handleMessage(msg);
                 String data = (String) msg.obj;
-                Toast.makeText(getContext(), data, Toast.LENGTH_LONG).show();
+                mDeviceConnectionDialog.dismiss();
+                alert(data);
                 if (checkBluetoothConn()) {
-                    alertDialog.cancel();
+                    mAlertDialog.cancel();
                     BluetoothDevice device = Singleton.getInstance().getBLEDevice();
-                    mToolBar.setTitle(getContext().getString(R.string.app_name) +  " " + device.getName() + " 連線中...");
+                    mToolBar.setTitle(mContext.getString(R.string.app_name) +  " " + device.getName() + " 連線中...");
                     mChart.description("裝置連線，等待資料中...");
 
                     Log.d(info.TAG(), "MainFragment::initHandler, mConnHandler data: " + data);
@@ -168,6 +183,17 @@ public class MainFragment extends Fragment implements
 
         // handler read data form bluetooth device
         mReadHandler = new Handler() {
+            @Override
+            public void handleMessage(Message msg) {
+                super.handleMessage(msg);
+                String data = (String) msg.obj;
+                Log.d(info.TAG(), "MainFragment::initHandler, mReadHandler data: " + data);
+                updateTemp(data);
+
+            }
+        };
+
+        mWriteHandler = new Handler() {
             @Override
             public void handleMessage(Message msg) {
                 super.handleMessage(msg);
@@ -190,6 +216,10 @@ public class MainFragment extends Fragment implements
     }
 
     private void initView() {
+        mDeviceConnectionDialog = new SmallProgressDialogUtil(
+                mContext,
+                mActivity.getString(R.string.ble_device_connecting)
+        );
 
         initToolbar();
         initNavigationView();
@@ -202,12 +232,12 @@ public class MainFragment extends Fragment implements
 
     private void initToolbar() {
         mToolBar = (Toolbar) mView.findViewById(R.id.toolbar);
-        ((MainActivity) getActivity()).setSupportActionBar(mToolBar);
+        ((MainActivity) mActivity).setSupportActionBar(mToolBar);
         setHasOptionsMenu(true);
 
         mDrawerLayout = (DrawerLayout) mView.findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                (MainActivity)getActivity(),
+                (MainActivity)mActivity,
                 mDrawerLayout,
                 mToolBar,
                 R.string.navigation_drawer_close,
@@ -245,13 +275,16 @@ public class MainFragment extends Fragment implements
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 final String data;
                 // 控制烘豆機為手動或自動模式
-                if (isChecked) {
+                if (!isChecked) {
                     Log.d(info.TAG(), "MainFragment::initNavigationView(), modelDrawerSwitch: Manual model");
+                    mModel = "m";
                     data = "m\r";
                 } else {
                     Log.d(info.TAG(), "MainFragment::initNavigationView(), modelDrawerSwitch: Auto model");
+                    mModel = "a";
                     data = "a\r";
                 }
+                setLineChart();
                 bluetoothWrite(data);
                 Thread t = new Thread(new Runnable() {
                     @Override
@@ -286,9 +319,20 @@ public class MainFragment extends Fragment implements
 
         mBinding.setMainViewModel(mMainViewModel);
 
-        String[] names = new String[]{
-                getActivity().getString(R.string.temp_beans),
-        };
+        setLineChart();
+    }
+
+    private void setLineChart()
+    {
+        String str = mActivity.getString(R.string.temp_stove);
+        if (mModel == "m") {
+            str = mActivity.getString(R.string.temp_stove);
+        } else if( mModel == "a") {
+            Log.e("test", "sss");
+            str = mActivity.getString(R.string.temp_beans);
+        }
+
+        String[] names = new String[]{str};
 
         String description = "No chart data available. Use the menu to add entries and data sets!";
         mChart = new MPChart(mLineChart, description, names);
@@ -306,6 +350,14 @@ public class MainFragment extends Fragment implements
         Log.d(info.TAG(), "MainFragment::onOptionsItemSelected(), onClick Options menu item...");
         switch (menuItem.getItemId()) {
             case R.id.action_conn:
+                if (!supportBluetooth()) {
+                    alert(getString(R.string.no_device_connection));
+                    return false;
+                } else if (!enableBluetooht()) {
+                    alert(getString(R.string.no_enable_bluetooth));
+                    return false;
+                }
+
                 getPairedDevices();
                 View view = getLayoutInflater().inflate(R.layout.fragment_device_list, null);
                 mDeviceListView = (ListView) view.findViewById(R.id.device_ListView);
@@ -313,7 +365,7 @@ public class MainFragment extends Fragment implements
 
                 mDeviceListView.setOnItemClickListener(listener);
 
-                AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+                AlertDialog.Builder builder = new AlertDialog.Builder(mActivity);
                 builder.setIcon(R.drawable.ic_bluetooth_black);
                 builder.setTitle(R.string.selectBluetoothDevice);
                 builder.setCancelable(false);
@@ -322,7 +374,7 @@ public class MainFragment extends Fragment implements
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.cancel();
-                    }
+                        }
                 });
                 builder.setNeutralButton(R.string.search, new DialogInterface.OnClickListener() {
                     @Override
@@ -331,13 +383,12 @@ public class MainFragment extends Fragment implements
                     }
                 });
                 builder.setView(view);
-                alertDialog = builder.create();
-                alertDialog.show();
-
+                mAlertDialog = builder.create();
+                mAlertDialog.show();
                 break;
         }
 
-        return false;
+        return true;
     }
 
     @Override
@@ -355,7 +406,8 @@ public class MainFragment extends Fragment implements
                 Date date = new Date(System.currentTimeMillis());
                 String filename = new SimpleDateFormat("yyyyMMddhhmmss").format(date);
                 mChart.saveToImage(filename);
-                new ExportToCSV(getContext(), filename).execute(mTempRecord);
+
+                new ExportToCSVAsyncTask(mContext, filename).execute(mTempRecord);
 
                 break;
             case R.id.nav_exit:
@@ -401,20 +453,31 @@ public class MainFragment extends Fragment implements
     @Override
     public void startAction(final boolean action) {
         if (Singleton.getInstance().getBLEDevice() != null && this.getActionStart()) {
-            Log.e("tet", "tes:" + action);
-            mMainViewModel.setIsImport(action);
+
 
             Thread t = new Thread(new Runnable() {
                 @Override
                 public void run() {
                     String operationCode = action? "o\r" : "c\r";
                     bluetoothWrite(operationCode);
+
+                    ((Activity) mContext).runOnUiThread(new Runnable() {
+                        public void run() {
+                            mMainViewModel.setIsImport(action);
+                            String msg = action? getString(R.string.enter_beans) : getString(R.string.exit_beans);
+
+                            alert(msg);
+                        }
+                    });
                 }
             });
 
             t.start();
+        } else if(Singleton.getInstance().getBLEDevice() == null) {
+            alert(getString(R.string.no_device_connection));
+        } else if(!this.getActionStart()) {
+            alert(getString(R.string.no_action_start));
         }
-
     }
 
     public void setActionStart(boolean status)
@@ -538,7 +601,7 @@ public class MainFragment extends Fragment implements
 //        intent.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
 //        intent.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED);
         intent.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
-        getContext().registerReceiver(mReceiver, intent);
+        mContext.registerReceiver(mReceiver, intent);
 
     }
 
@@ -563,7 +626,8 @@ public class MainFragment extends Fragment implements
         @Override
         public void onItemClick(AdapterView<?> arg0, View arg1, int position, long arg3) {
             Log.d(info.TAG(), "MainFragment::listener, item :" + position);
-            alertDialog.dismiss();
+            mAlertDialog.dismiss();
+            mDeviceConnectionDialog.show();
             final int p = position;
             Thread t = new Thread(new Runnable() {
                 @Override
@@ -644,9 +708,9 @@ public class MainFragment extends Fragment implements
     }
 
     private void exitAPP() {
-        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getContext());
-        alertDialogBuilder.setTitle("Exit Application?");
-        alertDialogBuilder.setMessage("Click yes to exit!");
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(mContext);
+        alertDialogBuilder.setTitle(mActivity.getString(R.string.exit_APP));
+        alertDialogBuilder.setMessage(mActivity.getString(R.string.exit_APP_describe));
         alertDialogBuilder.setCancelable(false);
         alertDialogBuilder.setPositiveButton("Yes", new DialogInterface.OnClickListener() {
             public void onClick(DialogInterface dialog, int id) {
@@ -661,8 +725,8 @@ public class MainFragment extends Fragment implements
             }
         });
 
-        alertDialog = alertDialogBuilder.create();
-        alertDialog.show();
+        mAlertDialog = alertDialogBuilder.create();
+        mAlertDialog.show();
     }
 
     /**
@@ -677,6 +741,41 @@ public class MainFragment extends Fragment implements
         } catch (IOException e) {
             Log.e(info.TAG(), "error :  " + e.getMessage());
         }
+    }
+
+    /**
+     * 是否支援藍牙
+     * @return
+     */
+    private boolean supportBluetooth()
+    {
+        if (Singleton.getInstance().getBLEAdapter() == null) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * 藍牙是否啟動
+     * @return
+     */
+    private boolean enableBluetooht()
+    {
+        if (!Singleton.getInstance().getBLEAdapter().isEnabled()) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private void alert(String msg) {
+        Snackbar.make(mView, msg, Snackbar.LENGTH_SHORT).show();
+//        Toast.makeText(
+//                this.mContext,
+//                msg,
+//                Toast.LENGTH_LONG
+//        ).show();
     }
 }
 

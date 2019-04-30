@@ -34,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void setBluetooth() {
         if (Singleton.getInstance().getBLEAdapter() == null) {
-            Toast.makeText(this, getResources().getString(R.string.noSupportBluetooth), Toast.LENGTH_LONG).show();
+            Toast.makeText(this, getResources().getString(R.string.no_support_bluetooth), Toast.LENGTH_LONG).show();
         } else {
             if (!Singleton.getInstance().getBLEAdapter().isEnabled()) {
                 Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
