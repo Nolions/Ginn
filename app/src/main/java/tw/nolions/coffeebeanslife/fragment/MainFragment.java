@@ -441,12 +441,12 @@ public class MainFragment extends Fragment implements
 
     @Override
     public void firstCrack() {
-
+        mChart.addXAxisLimitLine(getString(R.string.first_crack));
     }
 
     @Override
     public void secondCrack() {
-
+        mChart.addXAxisLimitLine(getString(R.string.second_crack));
     }
 
     @Override
@@ -463,7 +463,11 @@ public class MainFragment extends Fragment implements
                     ((Activity) mContext).runOnUiThread(new Runnable() {
                         public void run() {
                             mMainViewModel.setIsImport(action);
-                            String msg = action? getString(R.string.enter_beans) : getString(R.string.exit_beans);
+                            String msg = getString(R.string.exit_beans);
+                            if (action) {
+                                mChart.addXAxisLimitLine(getString(R.string.enter_beans));
+                                msg = getString(R.string.enter_beans);
+                            }
 
                             alert(msg);
                         }

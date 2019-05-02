@@ -1,10 +1,12 @@
 package tw.nolions.coffeebeanslife.widget;
 
 import android.graphics.Color;
+import android.util.Log;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.AxisBase;
 import com.github.mikephil.charting.components.Description;
+import com.github.mikephil.charting.components.LimitLine;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
@@ -27,6 +29,7 @@ public class MPChart implements OnChartValueSelectedListener {
             Color.parseColor("#eb73f6")    //紫色
     };
 
+    private XAxis xAxis;
     private LineChart mLineChart;
     private String[] mDataSetNames;
     private String mDescribe;
@@ -111,7 +114,7 @@ public class MPChart implements OnChartValueSelectedListener {
      * xAxis setting
      */
     public void xAxis() {
-        XAxis xAxis = this.mLineChart.getXAxis();
+        xAxis = this.mLineChart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         xAxis.enableGridDashedLine(10f, 10f, 0f);
         xAxis.setAxisMinimum(0);
@@ -220,6 +223,19 @@ public class MPChart implements OnChartValueSelectedListener {
         // TODO
         this.mLineChart.setVisibleXRangeMaximum(data.getEntryCount());
         this.mLineChart.moveViewTo(data.getEntryCount(), 50f, YAxis.AxisDependency.LEFT);
+    }
+
+    public void addXAxisLimitLine(String label)
+    {
+        LimitLine ll = new LimitLine(mXAixData.size(), label);
+        ll.setLineColor(Color.RED);
+        ll.setLineWidth(4f);
+        ll.setTextColor(Color.GRAY);
+        ll.setTextSize(12f);
+
+        // .. and more styling options
+        xAxis.addLimitLine(ll);
+        xAxis.setDrawLimitLinesBehindData(true);
     }
 
     public void saveToImage(String fileName)

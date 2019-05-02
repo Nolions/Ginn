@@ -56,6 +56,8 @@
     <string name="model_auto">自動</string>
     <string name="enter_beans">下豆</string>
     <string name="exit_beans">出豆</string>
+    <string name="first_crack">一爆</string>
+    <string name="second_crack">二爆</string>
 
     <string name="loading">載入中</string>
     <string name="ble_device_connecting">裝置連線中...</string>

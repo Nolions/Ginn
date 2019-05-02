@@ -137,15 +137,15 @@ public class MainViewModel extends ViewModel {
      * 一爆按鈕
      */
     public void onFirstCrack() {
-        mViewModelCallback.firstCrack();
         Log.d(info.TAG(), "MainViewModel::onFirstCrack()");
+        mViewModelCallback.firstCrack();
     }
 
     /**
      * 二爆按鈕
      */
     public void onSecondCrack() {
-        mViewModelCallback.secondCrack();
         Log.d(info.TAG(), "MainViewModel::onSecondCrack()");
+        mViewModelCallback.secondCrack();
     }
 }
