@@ -79,4 +79,21 @@ public class Convert {
         }
         return list;
     }
+
+    public static String SecondConversion(int seconds)
+    {
+        int sec = seconds % 60;
+        int hour = seconds / 60;
+        int min = hour % 60;
+
+        min = min / 60;
+
+        if (hour == 0 && min == 0) {
+            return sec + "s";
+        } else if(hour == 0) {
+            return min + "m" + sec + "s";
+        } else {
+            return hour + "h" + min + "m" + sec + "s";
+        }
+    }
 }

@@ -128,7 +128,8 @@ public class MPChart implements OnChartValueSelectedListener {
         xAxis.setValueFormatter(new IAxisValueFormatter() {
             @Override
             public String getFormattedValue(float value, AxisBase axis) {
-                return "" + mXAixData.get((int) value);
+                Long sec = mXAixData.get((int) value);
+                return tools.Convert.SecondConversion(sec.intValue());
             }
         });
     }
@@ -181,8 +182,8 @@ public class MPChart implements OnChartValueSelectedListener {
 
     /**
      * add line chart's entry
-     * @param int lineIndex
-     * @param float value
+     * @param lineIndex
+     * @param value
      */
     public void addEntry(int lineIndex, float value, Long sec) {
         LineData data = this.mLineChart.getLineData();
