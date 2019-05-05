@@ -104,6 +104,7 @@ public class MainFragment extends Fragment implements
     private Set<BluetoothDevice> mPairedDevices;
     private Long mStartTime = 0L;
     private HashMap<Long, JSONObject> mTempRecord;
+    private ArrayList<Long> mActionTimeDataSet;
     private Boolean mActionStart = false;
     private String mModel;
 
@@ -130,6 +131,7 @@ public class MainFragment extends Fragment implements
 
         mDeviceListAdapter = new BluetoothDeviceAdapter(this.mContext);
         mTempRecord = new HashMap<>();
+        mActionTimeDataSet = new ArrayList<>();
 
         // 檢查裝置是否支援藍牙
         bluetoothSupport();
@@ -442,10 +444,19 @@ public class MainFragment extends Fragment implements
     @Override
     public void firstCrack() {
         mChart.addXAxisLimitLine(getString(R.string.first_crack));
+        if (System.currentTimeMillis()/1000 - mStartTime != 0) {
+            Long sec = System.currentTimeMillis()/1000 - mStartTime;
+            mMainViewModel.setFirstCrackTime(sec.intValue() + 1);
+        }
+        mMainViewModel.setFirstCrackTime(mActionTimeDataSet.get(mActionTimeDataSet.size() -1));
     }
 
     @Override
     public void secondCrack() {
+        if (System.currentTimeMillis()/1000 - mStartTime != 0) {
+            Long sec = System.currentTimeMillis()/1000 - mStartTime;
+            mMainViewModel.setSecondCrackTime(sec.intValue() + 1);
+        }
         mChart.addXAxisLimitLine(getString(R.string.second_crack));
     }
 
@@ -506,7 +517,7 @@ public class MainFragment extends Fragment implements
         try {
             JSONObject jsonObject = new JSONObject(data);
 
-            HashMap<String, Object>  map = tools.Convert.toMap(jsonObject);
+            HashMap<String, Object>  map = Convert.toMap(jsonObject);
             mMainViewModel.updateTemp(map);
 
             if (mStartTime == 0L) {
@@ -525,7 +536,7 @@ public class MainFragment extends Fragment implements
                     temp = Convert.DecimalPoint((Double)map.get("b"));
                 }
 
-
+                mActionTimeDataSet.add(sec);
                 mChart.addEntry(0, Float.parseFloat(temp), sec);
             }
         } catch (JSONException e) {

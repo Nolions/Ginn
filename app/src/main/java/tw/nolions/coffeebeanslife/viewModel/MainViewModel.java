@@ -17,9 +17,7 @@ import tw.nolions.coffeebeanslife.callback.ViewModelCallback;
 
 public class MainViewModel extends ViewModel {
 
-    private final int TEMP_RANGE = 5;
-
-    public final ObservableField<String> mBeansTemp, mStoveTemp, mEnvironmentTemp, mTargetTemp;
+    public final ObservableField<String> mBeansTemp, mStoveTemp, mEnvironmentTemp, mTargetTemp, mFirstCrackTime, mSecondCrackTime;
     public final ObservableBoolean mIsImport;
 
     private ViewModelCallback mViewModelCallback;
@@ -38,6 +36,8 @@ public class MainViewModel extends ViewModel {
         mBeansTemp = new ObservableField<>();
         mStoveTemp = new ObservableField<>();
         mEnvironmentTemp = new ObservableField<>();
+        mFirstCrackTime = new ObservableField<>();
+        mSecondCrackTime = new ObservableField<>();
         mTargetTemp = new ObservableField<>();
 
         mIsImport = new ObservableBoolean(false);
@@ -77,6 +77,14 @@ public class MainViewModel extends ViewModel {
 
     public void setEnvironmentTemp(String temp) {
         this.mEnvironmentTemp.set(temp +  mActivity.getResources().getString(R.string.tempUnit));
+    }
+
+    public void setFirstCrackTime(int seconds) {
+        this.mFirstCrackTime.set(Convert.SecondConversion(seconds));
+    }
+
+    public void setSecondCrackTime(int seconds) {
+        this.mSecondCrackTime.set(Convert.SecondConversion(seconds));
     }
 
     /**

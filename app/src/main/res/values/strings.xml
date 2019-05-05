@@ -6,6 +6,8 @@
     <string name="temp_beans_label">豆溫:</string>
     <string name="temp_stove_label">爐溫:</string>
     <string name="temp_environment_label">環溫:</string>
+    <string name="first_crack_label">一爆:</string>
+    <string name="second_crack_label">二爆:</string>
 
 
     <string name="temp_icon">爐溫Icon</string>
