@@ -508,7 +508,7 @@ public class MainFragment extends Fragment implements
 
             HashMap<String, Object>  map = tools.Convert.toMap(jsonObject);
             mMainViewModel.updateTemp(map);
-            String bean = Convert.DecimalPoint((Double)map.get("b"));
+
             if (mStartTime == 0L) {
                 mStartTime = System.currentTimeMillis()/1000;
             }
@@ -520,7 +520,13 @@ public class MainFragment extends Fragment implements
 
             if (this.getActionStart()) {
                 mTempRecord.put(sec, jsonObject);
-                mChart.addEntry(0, Float.parseFloat(bean), sec);
+                String temp = Convert.DecimalPoint((Double)map.get("s"));
+                if (mModel == "a") {
+                    temp = Convert.DecimalPoint((Double)map.get("b"));
+                }
+
+
+                mChart.addEntry(0, Float.parseFloat(temp), sec);
             }
         } catch (JSONException e) {
             Log.e(info.TAG(), "MainFragment::updateTemp(), error :  " + e.getMessage());
