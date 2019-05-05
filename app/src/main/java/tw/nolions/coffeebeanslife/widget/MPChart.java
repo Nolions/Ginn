@@ -1,7 +1,6 @@
 package tw.nolions.coffeebeanslife.widget;
 
 import android.graphics.Color;
-import android.util.Log;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.AxisBase;
@@ -20,6 +19,8 @@ import com.github.mikephil.charting.utils.ColorTemplate;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+
+import tools.Convert;
 
 
 public class MPChart implements OnChartValueSelectedListener {
@@ -129,7 +130,7 @@ public class MPChart implements OnChartValueSelectedListener {
             @Override
             public String getFormattedValue(float value, AxisBase axis) {
                 Long sec = mXAixData.get((int) value);
-                return tools.Convert.SecondConversion(sec.intValue());
+                return Convert.SecondConversion(sec.intValue());
             }
         });
     }
@@ -230,7 +231,7 @@ public class MPChart implements OnChartValueSelectedListener {
     {
         LimitLine ll = new LimitLine(mXAixData.size(), label);
         ll.setLineColor(Color.RED);
-        ll.setLineWidth(4f);
+        ll.setLineWidth(2f);
         ll.setTextColor(Color.GRAY);
         ll.setTextSize(12f);
 
