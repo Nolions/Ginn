@@ -86,7 +86,7 @@ public class Convert {
         int hour = seconds / 60;
         int min = hour % 60;
 
-        min = min / 60;
+        hour = hour / 60;
 
         if (hour == 0 && min == 0) {
             return sec + "s";
