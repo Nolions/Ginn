@@ -265,7 +265,9 @@ public class MainFragment extends Fragment implements
                 // 控制接收溫度是否顯示在線圖上
                 if (isChecked) {
                     Log.d(info.TAG(), "MainFragment::initNavigationView(), statusDrawerSwitch: action start");
+                    mStartTime = System.currentTimeMillis()/1000;
                     setActionStart(true);
+
                 } else {
                     Log.d(info.TAG(), "MainFragment::initNavigationView(), statusDrawerSwitch: action stop");
                     mMainViewModel.setIsFirstCrack(false);
