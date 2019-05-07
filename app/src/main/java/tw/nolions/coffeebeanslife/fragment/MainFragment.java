@@ -55,11 +55,13 @@ import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Set;
 
 import tw.nolions.coffeebeanslife.R;
+import tw.nolions.coffeebeanslife.model.Temperature;
 import tw.nolions.coffeebeanslife.service.BluetoothAcceptService;
 import tw.nolions.coffeebeanslife.service.asyncTask.ExportToCSVAsyncTask;
 import tw.nolions.coffeebeanslife.viewModel.MainViewModel;
@@ -104,7 +106,8 @@ public class MainFragment extends Fragment implements
     private Set<BluetoothDevice> mPairedDevices;
     private Long mStartTime = 0L;
     private HashMap<Long, JSONObject> mTempRecord;
-    private ArrayList<Long> mActionTimeDataSet;
+    private ArrayList<Temperature> mTemperatureList;
+    private String mNowTemp = "";
     private Boolean mActionStart = false;
     private String mModel;
 
@@ -131,7 +134,7 @@ public class MainFragment extends Fragment implements
 
         mDeviceListAdapter = new BluetoothDeviceAdapter(this.mContext);
         mTempRecord = new HashMap<>();
-        mActionTimeDataSet = new ArrayList<>();
+        mTemperatureList = new ArrayList<>();
 
         // 檢查裝置是否支援藍牙
         bluetoothSupport();
@@ -265,7 +268,9 @@ public class MainFragment extends Fragment implements
                     setActionStart(true);
                 } else {
                     Log.d(info.TAG(), "MainFragment::initNavigationView(), statusDrawerSwitch: action stop");
-                    setActionStart(false);
+//                    setActionStart(false);
+
+                    mChart.refresh();
                 }
             }
         });
@@ -443,50 +448,56 @@ public class MainFragment extends Fragment implements
 
     @Override
     public void firstCrack() {
-        mChart.addXAxisLimitLine(getString(R.string.first_crack));
         if (System.currentTimeMillis()/1000 - mStartTime != 0) {
             Long sec = System.currentTimeMillis()/1000 - mStartTime;
-            mMainViewModel.setFirstCrackTime(sec.intValue() + 1);
+            mMainViewModel.setFirstCrackTime(sec.intValue());
+            mChart.addEntry(0, Float.parseFloat(mNowTemp), sec);
         }
-        mMainViewModel.setFirstCrackTime(mActionTimeDataSet.get(mActionTimeDataSet.size() -1));
+        mChart.addXAxisLimitLine(getString(R.string.first_crack));
+
     }
 
     @Override
     public void secondCrack() {
         if (System.currentTimeMillis()/1000 - mStartTime != 0) {
             Long sec = System.currentTimeMillis()/1000 - mStartTime;
-            mMainViewModel.setSecondCrackTime(sec.intValue() + 1);
+            mMainViewModel.setSecondCrackTime(sec.intValue());
+            mChart.addEntry(0, Float.parseFloat(mNowTemp), sec);
         }
         mChart.addXAxisLimitLine(getString(R.string.second_crack));
+
+
     }
 
     @Override
     public void startAction(final boolean action) {
         if (Singleton.getInstance().getBLEDevice() != null && this.getActionStart()) {
-
-
-            Thread t = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    String operationCode = action? "o\r" : "c\r";
-                    bluetoothWrite(operationCode);
-
-                    ((Activity) mContext).runOnUiThread(new Runnable() {
-                        public void run() {
-                            mMainViewModel.setIsImport(action);
-                            String msg = getString(R.string.exit_beans);
-                            if (action) {
-                                mChart.addXAxisLimitLine(getString(R.string.enter_beans));
-                                msg = getString(R.string.enter_beans);
-                            }
-
-                            alert(msg);
-                        }
-                    });
+            String msg = getString(R.string.exit_beans);
+            mMainViewModel.setIsImport(action);
+            if (action) {
+                mChart.refresh();
+                int index = 0;
+                ArrayList<Temperature> tempTemperatureList = new ArrayList<>();
+                for(int i = mTemperatureList.size(); i >= 1; i--) {
+                    if (index >= 5) {
+                        break;
+                    }
+                    tempTemperatureList.add(mTemperatureList.get(i-1));
+                    index++;
                 }
-            });
 
-            t.start();
+                Collections.reverse(tempTemperatureList);
+                for(Temperature model : tempTemperatureList) {
+                    mChart.addEntry(0, model.getTemp(), model.getSeconds());
+                }
+
+                msg = getString(R.string.enter_beans);
+                mChart.addXAxisLimitLine(getString(R.string.enter_beans));
+            } else {
+                setActionStart(false);
+            }
+
+            alert(msg);
         } else if(Singleton.getInstance().getBLEDevice() == null) {
             alert(getString(R.string.no_device_connection));
         } else if(!this.getActionStart()) {
@@ -531,13 +542,14 @@ public class MainFragment extends Fragment implements
 
             if (this.getActionStart()) {
                 mTempRecord.put(sec, jsonObject);
-                String temp = Convert.DecimalPoint((Double)map.get("s"));
+                mNowTemp = Convert.DecimalPoint((Double)map.get("s"));
                 if (mModel == "a") {
-                    temp = Convert.DecimalPoint((Double)map.get("b"));
+                    mNowTemp = Convert.DecimalPoint((Double)map.get("b"));
                 }
 
-                mActionTimeDataSet.add(sec);
-                mChart.addEntry(0, Float.parseFloat(temp), sec);
+                Temperature model = new Temperature(Float.parseFloat(mNowTemp), sec);
+                mTemperatureList.add(model);
+                mChart.addEntry(0, Float.parseFloat(mNowTemp), sec);
             }
         } catch (JSONException e) {
             Log.e(info.TAG(), "MainFragment::updateTemp(), error :  " + e.getMessage());

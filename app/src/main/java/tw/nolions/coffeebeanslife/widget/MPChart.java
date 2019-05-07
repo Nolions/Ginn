@@ -1,6 +1,7 @@
 package tw.nolions.coffeebeanslife.widget;
 
 import android.graphics.Color;
+import android.util.Log;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.AxisBase;
@@ -25,15 +26,16 @@ import tools.Convert;
 
 public class MPChart implements OnChartValueSelectedListener {
 
-    private int[] mColors = new int[]{
-            Color.parseColor("#5abdfc"),    //蓝色
-            Color.parseColor("#eb73f6")    //紫色
-    };
+//    private int[] mColors = new int[]{
+//            Color.parseColor("#5abdfc"),    //蓝色
+//            Color.parseColor("#eb73f6")    //紫色
+//    };
 
     private XAxis xAxis;
     private LineChart mLineChart;
     private String[] mDataSetNames;
     private String mDescribe;
+    private int mNum = 0;
 
     private Long mStartTime;
     private ArrayList<Long> mXAixData = new ArrayList<>();
@@ -71,7 +73,7 @@ public class MPChart implements OnChartValueSelectedListener {
 
     /**
      * setting chart's describe
-     * @param String describe
+     * @param describe
      */
     public void description(String describe) {
         this.mLineChart.setNoDataText(describe);
@@ -129,8 +131,11 @@ public class MPChart implements OnChartValueSelectedListener {
         xAxis.setValueFormatter(new IAxisValueFormatter() {
             @Override
             public String getFormattedValue(float value, AxisBase axis) {
-                Long sec = mXAixData.get((int) value);
+                if (mXAixData.size() > value) {
+                    Long sec = mXAixData.get((int) value);
                 return Convert.SecondConversion(sec.intValue());
+                }
+                return "0";
             }
         });
     }
@@ -145,8 +150,8 @@ public class MPChart implements OnChartValueSelectedListener {
 
     /**
      * init LineData's Set
-     * @param String name
-     * @param ArrayList entries
+     * @param name
+     * @param entries
      * @return LineDataSet
      */
     private LineDataSet initLineDataSet(String name, ArrayList<Entry> entries) {
@@ -174,7 +179,14 @@ public class MPChart implements OnChartValueSelectedListener {
     }
 
     public void refresh() {
+        mNum = 0;
+        this.mLineChart.fitScreen();
+        this.mLineChart.notifyDataSetChanged();
+        // TODO
+        mXAixData = new ArrayList<>();
+        this.mLineChart.clear();
         this.mLineChart.invalidate();
+        Log.e("test", "1222: " + mXAixData.size());
     }
 
     public void setChange() {
@@ -187,6 +199,7 @@ public class MPChart implements OnChartValueSelectedListener {
      * @param value
      */
     public void addEntry(int lineIndex, float value, Long sec) {
+        mNum ++;
         LineData data = this.mLineChart.getLineData();
 
         if (data == null) {
@@ -229,7 +242,7 @@ public class MPChart implements OnChartValueSelectedListener {
 
     public void addXAxisLimitLine(String label)
     {
-        LimitLine ll = new LimitLine(mXAixData.size(), label);
+        LimitLine ll = new LimitLine(mNum, label);
         ll.setLineColor(Color.RED);
         ll.setLineWidth(2f);
         ll.setTextColor(Color.GRAY);
