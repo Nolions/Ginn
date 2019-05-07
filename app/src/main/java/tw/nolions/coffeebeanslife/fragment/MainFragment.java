@@ -268,7 +268,8 @@ public class MainFragment extends Fragment implements
                     setActionStart(true);
                 } else {
                     Log.d(info.TAG(), "MainFragment::initNavigationView(), statusDrawerSwitch: action stop");
-//                    setActionStart(false);
+                    mMainViewModel.setIsFirstCrack(false);
+                    mMainViewModel.setIsSecondCrack(false);
 
                     mChart.refresh();
                 }
@@ -448,17 +449,18 @@ public class MainFragment extends Fragment implements
 
     @Override
     public void firstCrack() {
+        mMainViewModel.setIsFirstCrack(true);
         if (System.currentTimeMillis()/1000 - mStartTime != 0) {
             Long sec = System.currentTimeMillis()/1000 - mStartTime;
             mMainViewModel.setFirstCrackTime(sec.intValue());
             mChart.addEntry(0, Float.parseFloat(mNowTemp), sec);
         }
         mChart.addXAxisLimitLine(getString(R.string.first_crack));
-
     }
 
     @Override
     public void secondCrack() {
+        mMainViewModel.setIsSecondCrack(true);
         if (System.currentTimeMillis()/1000 - mStartTime != 0) {
             Long sec = System.currentTimeMillis()/1000 - mStartTime;
             mMainViewModel.setSecondCrackTime(sec.intValue());
@@ -476,6 +478,9 @@ public class MainFragment extends Fragment implements
             mMainViewModel.setIsImport(action);
             if (action) {
                 mChart.refresh();
+                mMainViewModel.setIsFirstCrack(false);
+                mMainViewModel.setIsSecondCrack(false);
+
                 int index = 0;
                 ArrayList<Temperature> tempTemperatureList = new ArrayList<>();
                 for(int i = mTemperatureList.size(); i >= 1; i--) {
@@ -550,6 +555,7 @@ public class MainFragment extends Fragment implements
                 Temperature model = new Temperature(Float.parseFloat(mNowTemp), sec);
                 mTemperatureList.add(model);
                 mChart.addEntry(0, Float.parseFloat(mNowTemp), sec);
+                mMainViewModel.setRunTime(sec.intValue());
             }
         } catch (JSONException e) {
             Log.e(info.TAG(), "MainFragment::updateTemp(), error :  " + e.getMessage());

@@ -17,8 +17,8 @@ import tw.nolions.coffeebeanslife.callback.ViewModelCallback;
 
 public class MainViewModel extends ViewModel {
 
-    public final ObservableField<String> mBeansTemp, mStoveTemp, mEnvironmentTemp, mTargetTemp, mFirstCrackTime, mSecondCrackTime;
-    public final ObservableBoolean mIsImport;
+    public final ObservableField<String> mBeansTemp, mStoveTemp, mEnvironmentTemp, mTargetTemp, mFirstCrackTime, mSecondCrackTime, mRunTime;
+    public final ObservableBoolean mIsImport, mIsFirstCrack, mIsSecondCrack;
 
     private ViewModelCallback mViewModelCallback;
 
@@ -39,8 +39,11 @@ public class MainViewModel extends ViewModel {
         mFirstCrackTime = new ObservableField<>();
         mSecondCrackTime = new ObservableField<>();
         mTargetTemp = new ObservableField<>();
+        mRunTime = new ObservableField<>();
 
         mIsImport = new ObservableBoolean(false);
+        mIsFirstCrack = new ObservableBoolean(true);
+        mIsSecondCrack = new ObservableBoolean(true);
 
         init();
     }
@@ -57,6 +60,16 @@ public class MainViewModel extends ViewModel {
     public boolean getIsImport()
     {
         return mIsImport.get();
+    }
+
+    public void setIsFirstCrack(boolean status)
+    {
+        this.mIsFirstCrack.set(status);
+    }
+
+    public void setIsSecondCrack(boolean status)
+    {
+        this.mIsSecondCrack.set(status);
     }
 
     public void setTargetTemp(String temp) {
@@ -85,6 +98,10 @@ public class MainViewModel extends ViewModel {
 
     public void setSecondCrackTime(int seconds) {
         this.mSecondCrackTime.set(Convert.SecondConversion(seconds));
+    }
+
+    public void setRunTime(int seconds) {
+        this.mRunTime.set(Convert.SecondConversion(seconds));
     }
 
     /**
@@ -117,7 +134,7 @@ public class MainViewModel extends ViewModel {
      * @param seekBar
      */
     public void onSendTargetTemp(SeekBar seekBar) {
-        Log.d(info.TAG(), "MainViewModel::onTargetTempChanged(), now Target temp :"+ getTargetTemp());
+        Log.d(info.TAG(), "MainViewModel::onSendTargetTemp(), now Target temp :"+ getTargetTemp());
         mViewModelCallback.updateTargetTemp(this.getTargetTemp());
     }
 

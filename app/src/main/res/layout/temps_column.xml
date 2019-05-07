@@ -14,14 +14,14 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="16sp"
+            android:textSize="14sp"
             android:text="@string/temp_beans_label" />
 
         <TextView
             android:id="@+id/temp_beans"
-            android:layout_width="80dp"
+            android:layout_width="70dp"
             android:layout_height="wrap_content"
-            android:textSize="16sp"
+            android:textSize="14sp"
             android:textStyle="bold"
             android:text="@{mainViewModel.mBeansTemp}" />
 
@@ -33,8 +33,8 @@
 
         <TextView
             android:id="@+id/temp_stove"
-            android:layout_width="80dp"
-            android:textSize="16sp"
+            android:layout_width="70dp"
+            android:textSize="14sp"
             android:textStyle="bold"
             android:layout_height="wrap_content"
             android:text="@{mainViewModel.mStoveTemp}" />
@@ -42,44 +42,58 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="16sp"
+            android:textSize="14sp"
             android:text="@string/temp_environment_label" />
 
         <TextView
             android:id="@+id/temp_environment"
-            android:layout_width="80dp"
+            android:layout_width="70dp"
             android:layout_height="wrap_content"
-            android:textSize="16sp"
+            android:textSize="14sp"
             android:textStyle="bold"
             android:text="@{mainViewModel.mEnvironmentTemp}" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="16sp"
+            android:textSize="14sp"
             android:text="@string/first_crack_label" />
 
         <TextView
             android:id="@+id/first_crack_time"
-            android:layout_width="110dp"
+            android:layout_width="75dp"
             android:layout_height="wrap_content"
-            android:textSize="16sp"
+            android:textSize="14sp"
             android:textStyle="bold"
             android:text="@{mainViewModel.mFirstCrackTime}" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="16sp"
+            android:textSize="14sp"
             android:text="@string/second_crack_label" />
 
         <TextView
             android:id="@+id/second_crack_time"
-            android:layout_width="110dp"
+            android:layout_width="75dp"
             android:layout_height="wrap_content"
-            android:textSize="16sp"
+            android:textSize="14sp"
             android:textStyle="bold"
             android:text="@{mainViewModel.mSecondCrackTime}" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:text="@string/run_time_label" />
+
+        <TextView
+            android:id="@+id/run_time"
+            android:layout_width="110dp"
+            android:layout_height="wrap_content"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:text="@{mainViewModel.mRunTime}" />
 
     </LinearLayout>
 </layout>
