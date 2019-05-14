@@ -65,6 +65,7 @@ import tw.nolions.coffeebeanslife.model.Temperature;
 import tw.nolions.coffeebeanslife.service.BluetoothAcceptService;
 import tw.nolions.coffeebeanslife.service.asyncTask.ExportToCSVAsyncTask;
 import tw.nolions.coffeebeanslife.viewModel.MainViewModel;
+import tw.nolions.coffeebeanslife.widget.AutoTempAdapter;
 import tw.nolions.coffeebeanslife.widget.BluetoothDeviceAdapter;
 import tw.nolions.coffeebeanslife.widget.MPChart;
 import tw.nolions.coffeebeanslife.widget.SmallProgressDialogUtil;
@@ -80,6 +81,7 @@ public class MainFragment extends Fragment implements
     private Toolbar mToolBar;
     private LineChart mLineChart;
     private ListView mDeviceListView;
+    private ListView mTempListView;
     private AlertDialog mAlertDialog;
 
     // view model
@@ -93,6 +95,7 @@ public class MainFragment extends Fragment implements
     // widget
     private MPChart mChart;
     private BluetoothDeviceAdapter mDeviceListAdapter;
+    private AutoTempAdapter mAutoTempAdapter;
     private SmallProgressDialogUtil mDeviceConnectionDialog;
 
     // handler
@@ -133,6 +136,7 @@ public class MainFragment extends Fragment implements
         mModel = "m";
 
         mDeviceListAdapter = new BluetoothDeviceAdapter(this.mContext);
+        mAutoTempAdapter = new AutoTempAdapter(this.mContext);
         mTempRecord = new HashMap<>();
         mTemperatureList = new ArrayList<>();
 
@@ -258,6 +262,13 @@ public class MainFragment extends Fragment implements
         NavigationView navigationView = (NavigationView) mView.findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
+        Menu menu = navigationView.getMenu();
+        Menu submenu = menu.addSubMenu(getString(R.string.appInfo));
+
+        submenu.add(getString(R.string.versionNameLabel)+info.VersionName(this.mContext)).setCheckable(false);
+
+        navigationView.invalidate();
+
         SwitchCompat statusDrawerSwitch = (SwitchCompat) navigationView.getMenu().findItem(R.id.nav_OnOff).getActionView();
         statusDrawerSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
@@ -281,7 +292,7 @@ public class MainFragment extends Fragment implements
         SwitchCompat modelDrawerSwitch = (SwitchCompat) navigationView.getMenu().findItem(R.id.nav_model_sel).getActionView();
         modelDrawerSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+            public void onCheckedChanged(CompoundButton buttonView, final boolean isChecked) {
                 final String data;
                 // 控制烘豆機為手動或自動模式
                 if (!isChecked) {
@@ -300,10 +311,22 @@ public class MainFragment extends Fragment implements
                     public void run() {
                         final String d = data;
                         bluetoothWrite(d);
+
+                        mActivity.runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (isChecked) {
+                                    setAutoModeTempAlertView();
+                                }
+                            }
+                        });
+
                     }
                 });
 
                 t.start();
+
+
             }
         });
     }
@@ -429,6 +452,8 @@ public class MainFragment extends Fragment implements
 //            case R.id.nav_send:
 //                Log.d(info.TAG(), "MainFragment::onNavigationItemSelected(), onClick nav Send item");
 //                break;
+            default:
+                return false;
         }
 
         mDrawerLayout.closeDrawer(GravityCompat.START);
@@ -503,6 +528,20 @@ public class MainFragment extends Fragment implements
             } else {
                 setActionStart(false);
             }
+
+            Thread t = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    String data = "c\r";
+                    if (action) {
+                        data = "o\r";
+                    }
+
+                    bluetoothWrite(data);
+                }
+            });
+
+            t.start();
 
             alert(msg);
         } else if(Singleton.getInstance().getBLEDevice() == null) {
@@ -766,6 +805,40 @@ public class MainFragment extends Fragment implements
         });
 
         mAlertDialog = alertDialogBuilder.create();
+        mAlertDialog.show();
+    }
+
+    private void setAutoModeTempAlertView() {
+        View view = getLayoutInflater().inflate(R.layout.temp_list, null);
+        mTempListView = (ListView) view.findViewById(R.id.temp_ListView);
+        mTempListView.setAdapter(mAutoTempAdapter);
+
+        // TODO
+        ArrayList<Temperature> temperatures = new ArrayList<>();
+        temperatures.add(new Temperature(30, 40L));
+        temperatures.add(new Temperature(40, 100L));
+        temperatures.add(new Temperature(50, 150L));
+        temperatures.add(new Temperature(100, 200L));
+        mAutoTempAdapter.setData(temperatures);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(mActivity);
+        builder.setIcon(R.drawable.ic_temp);
+        builder.setTitle(R.string.settingTemp);
+        builder.setCancelable(false);
+
+        builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.cancel();
+            }
+        });
+//        builder.setNeutralButton(R.string.add, new DialogInterface.OnClickListener() {
+//            @Override
+//            public void onClick(DialogInterface dialog, int which) {
+//            }
+//        });
+        builder.setView(view);
+        mAlertDialog = builder.create();
         mAlertDialog.show();
     }
 

@@ -182,11 +182,11 @@ public class MPChart implements OnChartValueSelectedListener {
         mNum = 0;
         this.mLineChart.fitScreen();
         this.mLineChart.notifyDataSetChanged();
-        // TODO
-        mXAixData = new ArrayList<>();
+
+        this.xAxis.removeAllLimitLines();
+        this.mXAixData = new ArrayList<>();
         this.mLineChart.clear();
         this.mLineChart.invalidate();
-        Log.e("test", "1222: " + mXAixData.size());
     }
 
     public void setChange() {

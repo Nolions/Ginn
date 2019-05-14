@@ -30,6 +30,9 @@
     <string name="menu_scan">搜尋</string>
     <string name="menu_stop">停止</string>
 
+    <string name="ok">確定</string>
+    <string name="add">新增</string>
+
     <!-- Menu items -->
     <!--<string name="menu_main_conn">連接裝置</string>-->
 
@@ -74,5 +77,10 @@
     <string name="export_success">資料成功匯出</string>
     <string name="export_fail">紀錄匯出失敗</string>
 
+    <string name="settingTemp">設定溫度</string>
+    <string name="appInfo">APP資訊</string>
+    <string name="versionNameLabel">版本:</string>
 
+    <string name="time">時間</string>
+    <string name="temp">溫度</string>
 </resources>
