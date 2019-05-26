@@ -93,15 +93,29 @@ public class MainViewModel extends ViewModel {
     }
 
     public void setFirstCrackTime(int seconds) {
-        this.mFirstCrackTime.set(Convert.SecondConversion(seconds));
+        String time = "";
+        if (seconds >= 0) {
+            time = Convert.SecondConversion(seconds);
+        }
+        this.mRunTime.set(time);
+        this.mFirstCrackTime.set(time);
     }
 
     public void setSecondCrackTime(int seconds) {
-        this.mSecondCrackTime.set(Convert.SecondConversion(seconds));
+        String time = "";
+        if (seconds >= 0) {
+            time = Convert.SecondConversion(seconds);
+        }
+        this.mRunTime.set(time);
+        this.mSecondCrackTime.set(time);
     }
 
     public void setRunTime(int seconds) {
-        this.mRunTime.set(Convert.SecondConversion(seconds));
+        String time = "";
+        if (seconds >= 0) {
+            time = Convert.SecondConversion(seconds);
+        }
+        this.mRunTime.set(time);
     }
 
     /**
@@ -172,5 +186,15 @@ public class MainViewModel extends ViewModel {
     public void onSecondCrack() {
         Log.d(info.TAG(), "MainViewModel::onSecondCrack()");
         mViewModelCallback.secondCrack();
+    }
+
+    /**
+     * 重設溫度資訊列時間資訊
+     */
+    public void refresh()
+    {
+         this.setRunTime(-1);
+        this.setFirstCrackTime(-1);
+        this.setSecondCrackTime(-1);
     }
 }

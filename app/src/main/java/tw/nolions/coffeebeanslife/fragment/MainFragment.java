@@ -285,6 +285,7 @@ public class MainFragment extends Fragment implements
                     mMainViewModel.setIsSecondCrack(false);
 
                     mChart.refresh();
+                    mMainViewModel.refresh();
                 }
             }
         });
