@@ -46,6 +46,12 @@ public class MPChart implements OnChartValueSelectedListener {
         this.mDescribe = describe;
     }
 
+    public MPChart(LineChart lineChart,  String[] names) {
+        this.mLineChart = lineChart;
+        this.mDataSetNames = names;
+        this.mDescribe = "";
+    }
+
     @Override
     public void onValueSelected(Entry e, Highlight h) {
 

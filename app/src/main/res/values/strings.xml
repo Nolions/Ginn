@@ -25,6 +25,7 @@
     <string name="no_support_bluetooth">該裝置不支援藍芽裝置</string>
     <string name="no_enable_bluetooth">尚未開啟藍芽</string>
 
+    <string name="need_action_stop">關閉連線前需先關閉</string>
 
     <string name="selectBluetoothDevice">選擇連線裝置</string>
     <string name="menu_scan">搜尋</string>
@@ -48,6 +49,7 @@
     <string name="navigation_menu_record">查看紀錄</string>
     <string name="navigation_menu_save">儲存</string>
     <string name="navigation_menu_export">匯出</string>
+    <string name="navigation_menu_stopConnect">停止連線</string>
     <string name="navigation_menu_exit">離開APP</string>
     <string name="navigation_menu_share">分享APP</string>
     <string name="navigation_menu_send">回報問題</string>
@@ -67,6 +69,7 @@
 
     <string name="loading">載入中</string>
     <string name="ble_device_connecting">裝置連線中...</string>
+    <string name="ble_device_stop_connecting">停止與裝置連線</string>
 
     <string name="exit_APP">確定要離開APP</string>
     <string name="exit_APP_describe">點擊Yes離開，反之則否</string>
@@ -76,6 +79,8 @@
     <string name="exporting">資料匯出中...</string>
     <string name="export_success">資料成功匯出</string>
     <string name="export_fail">紀錄匯出失敗</string>
+    <string name="device_connect_wait">等待連線裝置中...</string>
+    <string name="device_connecting">裝置連線中...</string>
 
     <string name="settingTemp">設定溫度</string>
     <string name="appInfo">APP資訊</string>

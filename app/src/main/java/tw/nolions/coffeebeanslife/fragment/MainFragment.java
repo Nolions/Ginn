@@ -181,7 +181,7 @@ public class MainFragment extends Fragment implements
                     mAlertDialog.cancel();
                     BluetoothDevice device = Singleton.getInstance().getBLEDevice();
                     mToolBar.setTitle(mContext.getString(R.string.app_name) +  " " + device.getName() + " 連線中...");
-                    mChart.description("裝置連線，等待資料中...");
+//                    mChart.description(getString(R.string.device_connecting));
 
                     Log.d(info.TAG(), "MainFragment::initHandler, mConnHandler data: " + data);
                     read();
@@ -292,6 +292,7 @@ public class MainFragment extends Fragment implements
                         Log.d(info.TAG(), "MainFragment::initNavigationView(), statusDrawerSwitch: action stop");
                         mMainViewModel.setIsFirstCrack(false);
                         mMainViewModel.setIsSecondCrack(false);
+                        setActionStart(false);
 
                         mChart.refresh();
                         mMainViewModel.refresh();
@@ -311,7 +312,7 @@ public class MainFragment extends Fragment implements
                     t.start();
                 } else if(Singleton.getInstance().getBLEDevice() == null) {
                     alert(getString(R.string.no_device_connection));
-                } else if(getActionStart()) {
+                } else if(!getActionStart()) {
                     alert(getString(R.string.no_action_start));
                 }
             }
@@ -357,7 +358,7 @@ public class MainFragment extends Fragment implements
                     t.start();
                 } else if(Singleton.getInstance().getBLEDevice() == null) {
                     alert(getString(R.string.no_device_connection));
-                } else if(getActionStart()) {
+                } else if(!getActionStart()) {
                     alert(getString(R.string.no_action_start));
                 }
             }
@@ -399,8 +400,7 @@ public class MainFragment extends Fragment implements
 
         String[] names = new String[]{str};
 
-        String description = "No chart data available. Use the menu to add entries and data sets!";
-        mChart = new MPChart(mLineChart, description, names);
+        mChart = new MPChart(mLineChart,  names);
         mChart.init();
     }
 
@@ -473,6 +473,17 @@ public class MainFragment extends Fragment implements
                 mChart.saveToImage(filename);
 
                 new ExportToCSVAsyncTask(mContext, filename).execute(mTempRecord);
+
+                break;
+            case R.id.nav_stopConnect:
+                if(getActionStart()) {
+                    alert(getString(R.string.need_action_stop));
+                } else {
+                    mToolBar.setTitle(getString(R.string.app_name));
+                    mChart.description(getString(R.string.device_connect_wait));
+                    closeBTEConnection();
+                    alert(getString(R.string.ble_device_stop_connecting));
+                }
 
                 break;
             case R.id.nav_exit:
@@ -561,8 +572,6 @@ public class MainFragment extends Fragment implements
             } else {
                 setActionStart(false);
             }
-
-//
 
             alert(msg);
         } else if(Singleton.getInstance().getBLEDevice() == null) {
