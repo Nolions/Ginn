@@ -191,7 +191,7 @@ public class MainFragment extends Fragment implements
             }
         };
 
-        // handler read data form bluetooth device
+        // handler read data form bluetooth dewvice
         mReadHandler = new Handler() {
             @Override
             public void handleMessage(Message msg) {
@@ -276,65 +276,90 @@ public class MainFragment extends Fragment implements
 
         navigationView.invalidate();
 
+        // 啟動/關閉
         SwitchCompat statusDrawerSwitch = (SwitchCompat) navigationView.getMenu().findItem(R.id.nav_OnOff).getActionView();
         statusDrawerSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
-            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                // 控制接收溫度是否顯示在線圖上
-                if (isChecked) {
-                    Log.d(info.TAG(), "MainFragment::initNavigationView(), statusDrawerSwitch: action start");
-                    mStartTime = System.currentTimeMillis()/1000;
-                    setActionStart(true);
+            public void onCheckedChanged(CompoundButton buttonView, final boolean isChecked) {
+                if (Singleton.getInstance().getBLEDevice() != null) {
+                    // 控制接收溫度是否顯示在線圖上
+                    if (isChecked) {
+                        Log.d(info.TAG(), "MainFragment::initNavigationView(), statusDrawerSwitch: action start");
+                        mStartTime = System.currentTimeMillis()/1000;
+                        setActionStart(true);
 
-                } else {
-                    Log.d(info.TAG(), "MainFragment::initNavigationView(), statusDrawerSwitch: action stop");
-                    mMainViewModel.setIsFirstCrack(false);
-                    mMainViewModel.setIsSecondCrack(false);
+                    } else {
+                        Log.d(info.TAG(), "MainFragment::initNavigationView(), statusDrawerSwitch: action stop");
+                        mMainViewModel.setIsFirstCrack(false);
+                        mMainViewModel.setIsSecondCrack(false);
 
-                    mChart.refresh();
-                    mMainViewModel.refresh();
+                        mChart.refresh();
+                        mMainViewModel.refresh();
+                    }
+
+                    Thread t = new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            String data = "c\r";
+                            if (isChecked) {
+                                data = "o\r";
+                            }
+
+                            bluetoothWrite(data);
+                        }
+                    });
+                    t.start();
+                } else if(Singleton.getInstance().getBLEDevice() == null) {
+                    alert(getString(R.string.no_device_connection));
+                } else if(getActionStart()) {
+                    alert(getString(R.string.no_action_start));
                 }
             }
         });
 
+        // 切換手/自動模式
         SwitchCompat modelDrawerSwitch = (SwitchCompat) navigationView.getMenu().findItem(R.id.nav_model_sel).getActionView();
         modelDrawerSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, final boolean isChecked) {
-                final String data;
-                // 控制烘豆機為手動或自動模式
-                if (!isChecked) {
-                    Log.d(info.TAG(), "MainFragment::initNavigationView(), modelDrawerSwitch: Manual model");
-                    mModel = "m";
-                    data = "m\r";
-                } else {
-                    Log.d(info.TAG(), "MainFragment::initNavigationView(), modelDrawerSwitch: Auto model");
-                    mModel = "a";
-                    data = "a\r";
-                }
-                setLineChart();
-                bluetoothWrite(data);
-                Thread t = new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        final String d = data;
-                        bluetoothWrite(d);
-
-                        mActivity.runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                if (isChecked) {
-                                    setAutoModeTempAlertView();
-                                }
-                            }
-                        });
-
+                if (Singleton.getInstance().getBLEDevice() != null) {
+                    final String data;
+                    // 控制烘豆機為手動或自動模式
+                    if (!isChecked) {
+                        Log.d(info.TAG(), "MainFragment::initNavigationView(), modelDrawerSwitch: Manual model");
+                        mModel = "m";
+                        data = "m\r";
+                    } else {
+                        Log.d(info.TAG(), "MainFragment::initNavigationView(), modelDrawerSwitch: Auto model");
+                        mModel = "a";
+                        data = "a\r";
                     }
-                });
+                    setLineChart();
 
-                t.start();
+                    Thread t = new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            final String d = data;
+                            bluetoothWrite(d);
 
+                            mActivity.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    if (isChecked) {
+                                        setAutoModeTempAlertView();
+                                    }
+                                }
+                            });
 
+                        }
+                    });
+
+                    t.start();
+                } else if(Singleton.getInstance().getBLEDevice() == null) {
+                    alert(getString(R.string.no_device_connection));
+                } else if(getActionStart()) {
+                    alert(getString(R.string.no_action_start));
+                }
             }
         });
     }
@@ -537,19 +562,7 @@ public class MainFragment extends Fragment implements
                 setActionStart(false);
             }
 
-            Thread t = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    String data = "c\r";
-                    if (action) {
-                        data = "o\r";
-                    }
-
-                    bluetoothWrite(data);
-                }
-            });
-
-            t.start();
+//
 
             alert(msg);
         } else if(Singleton.getInstance().getBLEDevice() == null) {
