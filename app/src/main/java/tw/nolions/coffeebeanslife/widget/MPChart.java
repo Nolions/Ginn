@@ -210,7 +210,7 @@ public class MPChart implements OnChartValueSelectedListener {
         ILineDataSet set = data.getDataSetByIndex(lineIndex);
         if (set == null) {
             ArrayList<Entry> entries = new ArrayList<>();
-            entries.add(new Entry(0, 0));
+            entries.add(new Entry(0, value));
 
             mStartTime = System.currentTimeMillis()/1000;
             mXAixData.add(0L);
@@ -219,10 +219,7 @@ public class MPChart implements OnChartValueSelectedListener {
             set = this.initLineDataSet(name, entries);
             data.addDataSet(set);
         }
-//        Long sec = 1L;
-//        if (System.currentTimeMillis()/1000 - mStartTime != 0) {
-//            sec = System.currentTimeMillis()/1000 - mStartTime;
-//        }
+
         mXAixData.add(sec);
 
         // choose a random dataSet
