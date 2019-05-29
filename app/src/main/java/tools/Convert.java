@@ -85,6 +85,7 @@ public class Convert {
         int sec = seconds % 60;
         int hour = seconds / 60;
         int min = hour % 60;
+        hour = hour/60;
 
         hour = hour / 60;
 
@@ -96,4 +97,16 @@ public class Convert {
             return hour + "h" + min + "m" + sec + "s";
         }
     }
+
+    public static HashMap<String, Integer> SecondToTimeMap(int seconds) {
+        int sec = seconds % 60;
+        int min = seconds / 60;
+
+        HashMap<String, Integer> map = new HashMap<>();
+        map.put("s", sec);
+        map.put("m", min);
+
+        return map;
+    }
+
 }
