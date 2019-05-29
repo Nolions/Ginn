@@ -25,6 +25,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.SwitchCompat;
 import android.support.v7.widget.Toolbar;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -113,6 +114,8 @@ public class MainFragment extends Fragment implements
     private String mNowTemp = "";
     private Boolean mActionStart = false;
     private String mModel;
+    private int mScreenHeight;
+    private int mScreenWidth;
 
     private Context mContext;
     private Activity mActivity;
@@ -125,7 +128,6 @@ public class MainFragment extends Fragment implements
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         init();
     }
 
@@ -219,6 +221,11 @@ public class MainFragment extends Fragment implements
         mView = mBinding.getRoot();
 
         initView();
+
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        mActivity.getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
+        mScreenHeight = displayMetrics.heightPixels;
+        mScreenWidth = displayMetrics.widthPixels;
 
         return mView;
     }
@@ -830,17 +837,14 @@ public class MainFragment extends Fragment implements
         builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
+                mAutoTempAdapter.getData();
                 dialog.cancel();
             }
         });
-//        builder.setNeutralButton(R.string.add, new DialogInterface.OnClickListener() {
-//            @Override
-//            public void onClick(DialogInterface dialog, int which) {
-//            }
-//        });
         builder.setView(view);
         mAlertDialog = builder.create();
         mAlertDialog.show();
+        mAlertDialog.getWindow().setLayout(mScreenWidth/10*9, mScreenHeight/10*9);
     }
 
     /**

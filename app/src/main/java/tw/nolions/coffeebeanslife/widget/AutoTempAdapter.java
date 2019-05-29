@@ -1,22 +1,26 @@
 package tw.nolions.coffeebeanslife.widget;
 
-import android.bluetooth.BluetoothDevice;
 import android.content.Context;
+import android.databinding.DataBindingUtil;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.TextView;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import tools.Convert;
 import tw.nolions.coffeebeanslife.R;
 import tw.nolions.coffeebeanslife.model.Temperature;
+import tw.nolions.coffeebeanslife.viewModel.TempItemViewModel;
+import tw.nolions.coffeebeanslife.databinding.ItemTempBinding;
 
 public class AutoTempAdapter extends BaseAdapter {
 
+//    private ItemTempBinding mBinding;
     private LayoutInflater mInflater;
     private ArrayList<Temperature> mTemperatureList;
 
@@ -59,20 +63,31 @@ public class AutoTempAdapter extends BaseAdapter {
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        View v = this.mInflater.inflate(R.layout.item_temp, null);
+        ItemTempBinding mBinding;
+        if (convertView == null) {
+            mBinding = DataBindingUtil.inflate(LayoutInflater.from(parent.getContext()), R.layout.item_temp, parent, false);
+            convertView = mBinding.getRoot();
+        } else {
+            mBinding = DataBindingUtil.getBinding(convertView);
+        }
 
-        TextView secondsTextView = (TextView) v.findViewById(R.id.setTemp_seconds);
-        TextView tempTextView = (TextView) v.findViewById(R.id.setTemp_temp);
+        TempItemViewModel viewModel = new TempItemViewModel();
+        mBinding.setTempItemViewModel(viewModel);
 
         Temperature model = this.mTemperatureList.get(position);
-        secondsTextView.setText("" + Convert.SecondConversion(model.getSeconds().intValue()));
-        Log.e("test", " " + model.getTemp());
-        tempTextView.setText(model.getTemp() + mContext.getString(R.string.tempUnit));
-
-        return v;
+        HashMap<String, Integer> map = Convert.SecondToTimeMap(model.getSeconds().intValue());
+        viewModel.setTimeMinute(map.get("m"));
+        viewModel.setTimeSecond(map.get("s"));
+        viewModel.setTemp(Math.round(model.getTemp()));
+        return convertView;
     }
 
     public void setData(ArrayList<Temperature> list) {
         this.mTemperatureList = list;
+    }
+
+    public ArrayList<Temperature> getData() {
+
+        return this.mTemperatureList;
     }
 }
