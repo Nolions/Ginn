@@ -53,8 +53,8 @@
             android:layout_marginTop="0dp"
             android:layout_marginEnd="80dp"
             android:max="300"
-            android:onProgressChanged="@{mainViewModel.onTargetTempChanged}"
-            android:onStopTrackingTouch="@{mainViewModel.onSendTargetTemp}"
+            android:onProgressChanged="@{mainViewModel::onTargetTempChanged}"
+            android:onStopTrackingTouch="@{mainViewModel::onSendTargetTemp}"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 

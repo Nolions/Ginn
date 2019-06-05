@@ -2,6 +2,8 @@ package tw.nolions.coffeebeanslife.widget;
 
 import android.content.Context;
 import android.databinding.DataBindingUtil;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,7 +12,6 @@ import android.widget.BaseAdapter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Map;
 
 import tools.Convert;
 import tw.nolions.coffeebeanslife.R;
@@ -41,9 +42,7 @@ public class AutoTempAdapter extends BaseAdapter {
 
     @Override
     public Object getItem(int arg0) {
-//        return this.mDeviceList.get(arg0);
-
-        return null;
+        return this.mTemperatureList.get(arg0);
     }
 
     @Override
@@ -62,8 +61,8 @@ public class AutoTempAdapter extends BaseAdapter {
     }
 
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-        ItemTempBinding mBinding;
+    public View getView(final int position, View convertView, ViewGroup parent) {
+        final ItemTempBinding mBinding;
         if (convertView == null) {
             mBinding = DataBindingUtil.inflate(LayoutInflater.from(parent.getContext()), R.layout.item_temp, parent, false);
             convertView = mBinding.getRoot();
@@ -73,6 +72,96 @@ public class AutoTempAdapter extends BaseAdapter {
 
         TempItemViewModel viewModel = new TempItemViewModel();
         mBinding.setTempItemViewModel(viewModel);
+
+        mBinding.editTemp.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                Log.e(tools.info.TAG(), "item :"+ position + " temp :" + mBinding.editTemp.getText());
+
+                Temperature t = mTemperatureList.get(position);
+                String nowTemp = mBinding.editTemp.getText().toString();
+                if (nowTemp.matches("")) {
+                    t.setTemp(0);
+                } else {
+                    t.setTemp(Float.parseFloat(nowTemp));
+                }
+
+                mTemperatureList.set(position, t);
+            }
+        });
+
+        mBinding.editTimeMinute.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                Log.e(tools.info.TAG(), "item :"+ position + " minute :" + mBinding.editTemp.getText());
+                Temperature t = mTemperatureList.get(position);
+                String minuteStr = mBinding.editTimeSeconds.getText().toString();
+                String secondsStr = mBinding.editTimeSeconds.getText().toString();
+                int minute = 0;
+                int seconds = 0;
+                if (!minuteStr.matches("")) {
+                    minute = Integer.valueOf(minuteStr);
+                }
+                if (!secondsStr.matches("")) {
+                    seconds = Integer.valueOf(minuteStr);
+                }
+
+                seconds = minute * 60 + seconds;
+                t.setSeconds(Long.valueOf(seconds));
+                mTemperatureList.set(position, t);
+            }
+        });
+
+        mBinding.editTimeSeconds.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                Log.e(tools.info.TAG(), "item :"+ position + " time seconds :" + mBinding.editTemp.getText());
+                Temperature t = mTemperatureList.get(position);
+                String minuteStr = mBinding.editTimeSeconds.getText().toString();
+                String secondsStr = mBinding.editTimeSeconds.getText().toString();
+                int minute = 0;
+                int seconds = 0;
+                if (!minuteStr.matches("")) {
+                    minute = Integer.valueOf(minuteStr);
+                }
+                if (!secondsStr.matches("")) {
+                    seconds = Integer.valueOf(minuteStr);
+                }
+
+                seconds = minute * 60 + seconds;
+                t.setSeconds(Long.valueOf(seconds));
+            }
+        });
 
         Temperature model = this.mTemperatureList.get(position);
         HashMap<String, Integer> map = Convert.SecondToTimeMap(model.getSeconds().intValue());

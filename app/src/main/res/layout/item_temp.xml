@@ -20,7 +20,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
-            android:layout_marginTop="15dp"
+            android:layout_marginTop="10dp"
             android:text="@string/time"
             android:textSize="18sp"
             app:layout_constraintStart_toStartOf="parent"
@@ -28,13 +28,14 @@
 
         <LinearLayout
             android:layout_width="wrap_content"
-            android:layout_height="50dp"
+            android:layout_height="40dp"
             android:layout_marginStart="60dp"
             android:orientation="horizontal"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
             <EditText
+                android:id="@+id/edit_time_minute"
                 android:layout_width="50dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
@@ -48,10 +49,13 @@
                 android:text="m" />
 
             <EditText
+                android:id="@+id/edit_time_seconds"
                 android:layout_width="50dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:inputType="number"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
                 android:text="@{tempItemViewModel.mTimeSecond}"
                 android:textAlignment="center" />
 
@@ -66,7 +70,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="215dp"
-            android:layout_marginTop="15dp"
+            android:layout_marginTop="10dp"
             android:text="@string/temp"
             android:textSize="18sp"
             app:layout_constraintStart_toStartOf="parent"
@@ -74,7 +78,7 @@
 
         <LinearLayout
             android:layout_width="wrap_content"
-            android:layout_height="50dp"
+            android:layout_height="40dp"
             android:layout_marginStart="260dp"
             android:orientation="horizontal"
             app:layout_constraintStart_toStartOf="parent"
@@ -89,11 +93,13 @@
                 android:onClick="@{() -> tempItemViewModel.onLessTempClick()}"/>
 
             <EditText
-                android:id="@+id/et_number"
+                android:id="@+id/edit_temp"
                 android:layout_width="15dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:inputType="number"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
                 android:text="@{tempItemViewModel.mTemp}"
                 android:textAlignment="center" />
 
