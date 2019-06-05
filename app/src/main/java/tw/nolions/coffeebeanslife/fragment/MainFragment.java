@@ -33,6 +33,7 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.CompoundButton;
 import android.widget.ListView;
@@ -618,9 +619,9 @@ public class MainFragment extends Fragment implements
 
             if (this.getActionStart()) {
                 mTempRecord.put(sec, jsonObject);
-                mNowTemp = Convert.DecimalPoint((Double)map.get("s"));
+                mNowTemp = String.valueOf(map.get("s"));
                 if (mModel == "a") {
-                    mNowTemp = Convert.DecimalPoint((Double)map.get("b"));
+                    mNowTemp = String.valueOf(map.get("b"));
                 }
 
                 Temperature model = new Temperature(Float.parseFloat(mNowTemp), sec);
@@ -849,6 +850,7 @@ public class MainFragment extends Fragment implements
         temperatures.add(new Temperature(40, 100L));
         temperatures.add(new Temperature(50, 150L));
         temperatures.add(new Temperature(100, 200L));
+        temperatures.add(new Temperature(200, 300L));
         mAutoTempAdapter.setData(temperatures);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(mActivity);
@@ -859,7 +861,11 @@ public class MainFragment extends Fragment implements
         builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                mAutoTempAdapter.getData();
+                ;
+                for (int i = 0; i < mAutoTempAdapter.getData().size(); i++) {
+                    Temperature t = mAutoTempAdapter.getData().get(i);
+                    Log.e(info.TAG(), "time: " + t.getSeconds() + ", temp:" + t.getTemp());
+                }
                 dialog.cancel();
             }
         });
@@ -867,6 +873,7 @@ public class MainFragment extends Fragment implements
         mAlertDialog = builder.create();
         mAlertDialog.show();
         mAlertDialog.getWindow().setLayout(mScreenWidth/10*9, mScreenHeight/10*9);
+        mAlertDialog.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE|WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
     }
 
     /**

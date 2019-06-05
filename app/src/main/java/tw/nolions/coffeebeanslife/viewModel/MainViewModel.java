@@ -123,13 +123,9 @@ public class MainViewModel extends ViewModel {
      * @param data
      */
     public void updateTemp(HashMap data) {
-        String bean = Convert.DecimalPoint((Double)data.get("b"));
-        String stove = Convert.DecimalPoint((Double) data.get("s"));
-        String environment = Convert.DecimalPoint((Double) data.get("e"));
-
-        setBeansTemp(bean);
-        setStoveTemp(stove);
-        setEnvironmentTemp(environment);
+        setBeansTemp(String.valueOf(data.get("b")));
+        setStoveTemp(String.valueOf(data.get("s")));
+        setEnvironmentTemp(String.valueOf(data.get("e")));
     }
 
     /**
