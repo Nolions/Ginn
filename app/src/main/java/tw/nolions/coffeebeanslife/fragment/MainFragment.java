@@ -302,12 +302,15 @@ public class MainFragment extends Fragment implements
                     Thread t = new Thread(new Runnable() {
                         @Override
                         public void run() {
-                            String data = "c\r";
+                            HashMap<String, Object> map = new HashMap<>();
+                            map.put("action", "status");
                             if (isChecked) {
-                                data = "o\r";
+                                map.put("start", true);
+                            } else {
+                                map.put("start", false);
                             }
 
-                            bluetoothWrite(data);
+                            bluetoothWrite(new JSONObject(map));
                         }
                     });
                     t.start();
@@ -325,24 +328,20 @@ public class MainFragment extends Fragment implements
             @Override
             public void onCheckedChanged(CompoundButton buttonView, final boolean isChecked) {
                 if (Singleton.getInstance().getBLEDevice() != null) {
-                    final String data;
-                    // 控制烘豆機為手動或自動模式
-                    if (!isChecked) {
-                        Log.d(info.TAG(), "MainFragment::initNavigationView(), modelDrawerSwitch: Manual model");
-                        mModel = "m";
-                        data = "m\r";
-                    } else {
-                        Log.d(info.TAG(), "MainFragment::initNavigationView(), modelDrawerSwitch: Auto model");
-                        mModel = "a";
-                        data = "a\r";
-                    }
                     setLineChart();
 
                     Thread t = new Thread(new Runnable() {
                         @Override
                         public void run() {
-                            final String d = data;
-                            bluetoothWrite(d);
+                            HashMap<String, Object> map = new HashMap<>();
+                            map.put("action", "model");
+                            if (isChecked) {
+                                map.put("auto", true);
+                            } else {
+                                map.put("auto", false);
+                            }
+
+                            bluetoothWrite(new JSONObject(map));
 
                             mActivity.runOnUiThread(new Runnable() {
                                 @Override
@@ -352,7 +351,6 @@ public class MainFragment extends Fragment implements
                                     }
                                 }
                             });
-
                         }
                     });
 
@@ -512,7 +510,10 @@ public class MainFragment extends Fragment implements
         Thread t = new Thread(new Runnable() {
             @Override
             public void run() {
-                bluetoothWrite(temp);
+                HashMap<String, Object> map = new HashMap<>();
+                map.put("action", "temp");
+                map.put("target", Integer.valueOf(temp));
+                bluetoothWrite(new JSONObject(map));
             }
         });
 
@@ -879,12 +880,12 @@ public class MainFragment extends Fragment implements
     /**
      * 透過藍芽傳送資料
      *
-     * @param data 欲傳送的資料內容
+     * @param jsonObject 欲傳送的資料內容
      */
-    private void bluetoothWrite(final String data)
+    private void bluetoothWrite(final JSONObject jsonObject)
     {
         try {
-            mOutputStream.write(data.getBytes());
+            mOutputStream.write(jsonObject.toString().getBytes());
         } catch (IOException e) {
             Log.e(info.TAG(), "error :  " + e.getMessage());
         }
