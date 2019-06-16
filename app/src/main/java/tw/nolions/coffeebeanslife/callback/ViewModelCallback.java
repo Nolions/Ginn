@@ -4,5 +4,5 @@ public interface ViewModelCallback {
     void updateTargetTemp(String temp);
     void firstCrack();
     void secondCrack();
-    void startAction(boolean action);
+    void actionBean(boolean action);
 }

@@ -5,15 +5,17 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
-import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.ServiceConnection;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.IBinder;
 import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
@@ -51,10 +53,8 @@ import com.github.mikephil.charting.charts.LineChart;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -64,7 +64,9 @@ import java.util.Set;
 
 import tw.nolions.coffeebeanslife.R;
 import tw.nolions.coffeebeanslife.model.Temperature;
+import tw.nolions.coffeebeanslife.service.Application.MainApplication;
 import tw.nolions.coffeebeanslife.service.BluetoothAcceptService;
+import tw.nolions.coffeebeanslife.service.Service.BluetoothService;
 import tw.nolions.coffeebeanslife.service.asyncTask.ExportToCSVAsyncTask;
 import tw.nolions.coffeebeanslife.viewModel.MainViewModel;
 import tw.nolions.coffeebeanslife.widget.AutoTempAdapter;
@@ -90,9 +92,7 @@ public class MainFragment extends Fragment implements
     private MainViewModel mMainViewModel;
     private FragmentMainBinding mBinding;
 
-    // bluetooth
-    private OutputStream mOutputStream;
-    private InputStream mInputStream;
+    private MainApplication mAPP;
 
     // widget
     private MPChart mChart;
@@ -100,17 +100,11 @@ public class MainFragment extends Fragment implements
     private AutoTempAdapter mAutoTempAdapter;
     private SmallProgressDialogUtil mDeviceConnectionDialog;
 
-    // handler
-    private Handler mConnHandler;
-    private Handler mReadHandler;
-    private Handler mWriteHandler;
-
     private DrawerLayout mDrawerLayout;
 
     // data
-    private Set<BluetoothDevice> mPairedDevices;
-    private Long mStartTime = 0L;
-    private HashMap<Long, JSONObject> mTempRecord;
+    private int mStartTime = 0;
+    private HashMap<Integer, JSONObject> mTempRecord;
     private ArrayList<Temperature> mTemperatureList;
     private String mNowTemp = "";
     private Boolean mActionStart = false;
@@ -120,6 +114,31 @@ public class MainFragment extends Fragment implements
 
     private Context mContext;
     private Activity mActivity;
+
+    private BluetoothService mBluetoothService;
+
+    private Boolean mIsBound = false;
+
+    private Handler mConnHandler = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            Log.d(info.TAG(), "what:" + msg.what+ " obj:" + msg.obj);
+            switch (msg.what) {
+                case 0:
+                case 1:
+                case 2:
+                    alert((String) msg.obj);
+                    break;
+                case 3:
+                    updateTemp((String) msg.obj);
+                    break;
+                case 4:
+                    break;
+
+            }
+        }
+    };
 
     @NonNull
     public static MainFragment newInstance() {
@@ -132,9 +151,53 @@ public class MainFragment extends Fragment implements
         init();
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        super.onDetach();
+        if (mIsBound) {
+            mActivity.unbindService(mConnection);
+            mIsBound = false;
+            stopBluetoothConnect();
+        }
+        mContext.stopService(new Intent(mActivity, BluetoothService.class));
+    }
+
+    @Override
+    public void onDetach() {
+        super.onDetach();
+        if (mIsBound) {
+            mActivity.unbindService(mConnection);
+            mIsBound = false;
+            stopBluetoothConnect();
+        }
+        mContext.stopService(new Intent(mActivity, BluetoothService.class));
+    }
+
+    private void stopBluetoothConnect() {
+        if (mBluetoothService != null) {
+            mBluetoothService.stop();
+            Log.d(mAPP.TAG(), "bluetooth stop connection");
+        }
+    }
+
+    private ServiceConnection mConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder binder) {
+            mBluetoothService = ((BluetoothService.LocalBinder)binder).getInstance();
+            mBluetoothService.setHandler(mConnHandler);
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+
+        }
+    };
+
     private void init() {
-        this.mContext = this.getContext();
-        this.mActivity = this.getActivity();
+        mContext = this.getContext();
+        mActivity = this.getActivity();
+        mAPP = (MainApplication) mActivity.getApplication();
 
         mModel = "m";
 
@@ -147,8 +210,8 @@ public class MainFragment extends Fragment implements
         bluetoothSupport();
         // 請求權限
         grantedPermission();
-
-        initHandler();
+        // 啟動Service
+        onStartService();
     }
 
     private void grantedPermission() {
@@ -157,63 +220,14 @@ public class MainFragment extends Fragment implements
                         Manifest.permission.ACCESS_COARSE_LOCATION,
                         Manifest.permission.WRITE_EXTERNAL_STORAGE,
                         Manifest.permission.READ_EXTERNAL_STORAGE
-                },
-                info.PermissionsRequestAccessLocationCode()
+                }, mAPP.PermissionsRequestAccessLocationCode()
         );
     }
-
 
     private void bluetoothSupport() {
         if (Singleton.getInstance().getBLEAdapter() == null) {
             alert(getString(R.string.no_support_bluetooth));
         }
-    }
-
-    private void initHandler() {
-        // handler bluetooth device connection
-        mConnHandler = new Handler(){
-            @Override
-            public void handleMessage(Message msg) {
-                super.handleMessage(msg);
-                String data = (String) msg.obj;
-                mDeviceConnectionDialog.dismiss();
-                alert(data);
-                if (checkBluetoothConn()) {
-                    mAlertDialog.cancel();
-                    BluetoothDevice device = Singleton.getInstance().getBLEDevice();
-                    mToolBar.setTitle(mContext.getString(R.string.app_name) +  " " + device.getName() + " 連線中...");
-//                    mChart.description(getString(R.string.device_connecting));
-
-                    Log.d(info.TAG(), "MainFragment::initHandler, mConnHandler data: " + data);
-                    read();
-                } else {
-
-                }
-            }
-        };
-
-        // handler read data form bluetooth dewvice
-        mReadHandler = new Handler() {
-            @Override
-            public void handleMessage(Message msg) {
-                super.handleMessage(msg);
-                String data = (String) msg.obj;
-                Log.d(info.TAG(), "MainFragment::initHandler, mReadHandler data: " + data);
-                updateTemp(data);
-
-            }
-        };
-
-        mWriteHandler = new Handler() {
-            @Override
-            public void handleMessage(Message msg) {
-                super.handleMessage(msg);
-                String data = (String) msg.obj;
-                Log.d(info.TAG(), "MainFragment::initHandler, mReadHandler data: " + data);
-                updateTemp(data);
-
-            }
-        };
     }
 
     @Override
@@ -229,6 +243,14 @@ public class MainFragment extends Fragment implements
         mScreenWidth = displayMetrics.widthPixels;
 
         return mView;
+    }
+
+    private void onStartService() {
+        Intent intent = new Intent(mActivity.getBaseContext(), BluetoothService.class);
+        intent.putExtra("TAG", mAPP.TAG());
+        intent.putExtra("UUID", mAPP.BluetoothUUID());
+        mActivity.startService(intent);
+        mActivity.bindService(new Intent(mActivity, BluetoothService.class), mConnection, Context.BIND_AUTO_CREATE);
     }
 
     private void initView() {
@@ -273,7 +295,7 @@ public class MainFragment extends Fragment implements
         Menu menu = navigationView.getMenu();
         Menu submenu = menu.addSubMenu(getString(R.string.appInfo));
 
-        submenu.add(getString(R.string.versionNameLabel)+info.VersionName(this.mContext)).setCheckable(false);
+        submenu.add(getString(R.string.versionNameLabel) + mAPP.VersionName()).setCheckable(false);
 
         navigationView.invalidate();
 
@@ -282,23 +304,8 @@ public class MainFragment extends Fragment implements
         statusDrawerSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, final boolean isChecked) {
-                if (Singleton.getInstance().getBLEDevice() != null) {
-                    // 控制接收溫度是否顯示在線圖上
-                    if (isChecked) {
-                        Log.d(info.TAG(), "MainFragment::initNavigationView(), statusDrawerSwitch: action start");
-                        mStartTime = System.currentTimeMillis()/1000;
-                        setActionStart(true);
-
-                    } else {
-                        Log.d(info.TAG(), "MainFragment::initNavigationView(), statusDrawerSwitch: action stop");
-                        mMainViewModel.setIsFirstCrack(false);
-                        mMainViewModel.setIsSecondCrack(false);
-                        setActionStart(false);
-
-                        mChart.refresh();
-                        mMainViewModel.refresh();
-                    }
-
+//                if (Singleton.getInstance().getBLEDevice() != null) {
+                if (mBluetoothService.getState() == 2) {
                     Thread t = new Thread(new Runnable() {
                         @Override
                         public void run() {
@@ -310,11 +317,35 @@ public class MainFragment extends Fragment implements
                                 map.put("start", false);
                             }
 
+
                             bluetoothWrite(new JSONObject(map));
+
+                            mActivity.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    // 控制接收溫度是否顯示在線圖上
+                                    if (isChecked) {
+                                        Log.d(mAPP.TAG(), "MainFragment::initNavigationView(), statusDrawerSwitch: action start");
+                                        mStartTime = (int) System.currentTimeMillis()/1000;
+                                        setActionStart(true);
+
+                                    } else {
+                                        Log.e(mAPP.TAG(), "MainFragment::initNavigationView(), statusDrawerSwitch: action stop");
+                                        mMainViewModel.setIsFirstCrack(false);
+                                        mMainViewModel.setIsSecondCrack(false);
+                                        setActionStart(false);
+
+                                        mChart.refresh();
+                                        mMainViewModel.refresh();
+                                    }
+                                }
+                            });
                         }
                     });
+
                     t.start();
-                } else if(Singleton.getInstance().getBLEDevice() == null) {
+
+                } else if(mBluetoothService.getBluetoothDevice() == null) {
                     alert(getString(R.string.no_device_connection));
                 } else if(!getActionStart()) {
                     alert(getString(R.string.no_action_start));
@@ -355,9 +386,11 @@ public class MainFragment extends Fragment implements
                     });
 
                     t.start();
-                } else if(Singleton.getInstance().getBLEDevice() == null) {
+                } else if(mBluetoothService.getBondedDevices() == null) {
+                    Log.d(mAPP.TAG(), "MainFragment::modelDrawerSwitch::onCheckedChanged()" + getString(R.string.no_device_connection));
                     alert(getString(R.string.no_device_connection));
                 } else if(!getActionStart()) {
+                    Log.d(mAPP.TAG(), "MainFragment::modelDrawerSwitch::onCheckedChanged()" + getString(R.string.no_action_start));
                     alert(getString(R.string.no_action_start));
                 }
             }
@@ -380,7 +413,7 @@ public class MainFragment extends Fragment implements
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
-        mMainViewModel = new MainViewModel(this);
+        mMainViewModel = new MainViewModel(this, mAPP);
 
         mBinding.setMainViewModel(mMainViewModel);
 
@@ -390,10 +423,9 @@ public class MainFragment extends Fragment implements
     private void setLineChart()
     {
         String str = mActivity.getString(R.string.temp_stove);
-        if (mModel == "m") {
+        if (mModel.equals("m")) {
             str = mActivity.getString(R.string.temp_stove);
-        } else if( mModel == "a") {
-            Log.e("test", "sss");
+        } else if(mModel.equals("a")) {
             str = mActivity.getString(R.string.temp_beans);
         }
 
@@ -411,13 +443,15 @@ public class MainFragment extends Fragment implements
 
     @Override
     public boolean onOptionsItemSelected(MenuItem menuItem) {
-        Log.d(info.TAG(), "MainFragment::onOptionsItemSelected(), onClick Options menu item...");
+        Log.d(mAPP.TAG(), "MainFragment::onOptionsItemSelected(), onClick Options menu item...");
         switch (menuItem.getItemId()) {
             case R.id.action_conn:
-                if (!supportBluetooth()) {
-                    alert(getString(R.string.no_device_connection));
+                if (!mBluetoothService.isSupport()) {
+                    Log.e(mAPP.TAG(), "MainFragment::actionBean(), " + getString(R.string.no_support_bluetooth));
+                    alert(getString(R.string.no_support_bluetooth));
                     return false;
-                } else if (!enableBluetooht()) {
+                } else if(!mBluetoothService.isEnable()) {
+                    Log.e(mAPP.TAG(), "MainFragment::actionBean(), " + getString(R.string.no_enable_bluetooth));
                     alert(getString(R.string.no_enable_bluetooth));
                     return false;
                 }
@@ -438,7 +472,7 @@ public class MainFragment extends Fragment implements
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.cancel();
-                        }
+                    }
                 });
                 builder.setNeutralButton(R.string.search, new DialogInterface.OnClickListener() {
                     @Override
@@ -456,17 +490,17 @@ public class MainFragment extends Fragment implements
     }
 
     @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
-        Log.d(info.TAG(), "MainFragment::onNavigationItemSelected(), onClick Navigation menu item...");
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+        Log.d(mAPP.TAG(), "MainFragment::onNavigationItemSelected(), onClick Navigation menu item...");
         switch (item.getItemId()) {
 //            case R.id.nav_record:
-//                Log.d(info.TAG(), "MainFragment::onNavigationItemSelected(), onClick nav Record item");
+//                Log.d(mAPP.TAG(), "MainFragment::onNavigationItemSelected(), onClick nav Record item");
 //                break;
 //            case R.id.nav_save:
-//                Log.d(info.TAG(), "MainFragment::onNavigationItemSelected(), onClick nav Save item");
+//                Log.d(mAPP.TAG(), "MainFragment::onNavigationItemSelected(), onClick nav Save item");
 //                break;
             case R.id.nav_export:
-                Log.d(info.TAG(), "MainFragment::onNavigationItemSelected(), onClick nav Export item");
+                Log.d(mAPP.TAG(), "MainFragment::onNavigationItemSelected(), onClick nav Export item");
                 Date date = new Date(System.currentTimeMillis());
                 String filename = new SimpleDateFormat("yyyyMMddhhmmss").format(date);
                 mChart.saveToImage(filename);
@@ -480,20 +514,20 @@ public class MainFragment extends Fragment implements
                 } else {
                     mToolBar.setTitle(getString(R.string.app_name));
                     mChart.description(getString(R.string.device_connect_wait));
-                    closeBTEConnection();
+                    stopBluetoothConnect();
                     alert(getString(R.string.ble_device_stop_connecting));
                 }
 
                 break;
             case R.id.nav_exit:
-                Log.d(info.TAG(), "MainFragment::onNavigationItemSelected(), onClick nav Exit item");
+                Log.d(mAPP.TAG(), "MainFragment::onNavigationItemSelected(), onClick nav Exit item");
                 exitAPP();
                 break;
 //            case R.id.nav_share:
-//                Log.d(info.TAG(), "MainFragment::onNavigationItemSelected(), onClick nav Share item");
+//                Log.d(mAPP.TAG(), "MainFragment::onNavigationItemSelected(), onClick nav Share item");
 //                break;
 //            case R.id.nav_send:
-//                Log.d(info.TAG(), "MainFragment::onNavigationItemSelected(), onClick nav Send item");
+//                Log.d(mAPP.TAG(), "MainFragment::onNavigationItemSelected(), onClick nav Send item");
 //                break;
             default:
                 return false;
@@ -505,7 +539,7 @@ public class MainFragment extends Fragment implements
 
     @Override
     public void updateTargetTemp(final String temp) {
-        Log.d(info.TAG(), "updateTargetTemp:" +  temp);
+        Log.d(mAPP.TAG(), "updateTargetTemp:" +  temp);
 
         Thread t = new Thread(new Runnable() {
             @Override
@@ -524,8 +558,8 @@ public class MainFragment extends Fragment implements
     public void firstCrack() {
         mMainViewModel.setIsFirstCrack(true);
         if (System.currentTimeMillis()/1000 - mStartTime != 0) {
-            Long sec = System.currentTimeMillis()/1000 - mStartTime;
-            mMainViewModel.setFirstCrackTime(sec.intValue());
+            int sec = (int) System.currentTimeMillis()/1000 - mStartTime;
+            mMainViewModel.setFirstCrackTime(sec);
             mChart.addEntry(0, Float.parseFloat(mNowTemp), sec);
         }
         mChart.addXAxisLimitLine(getString(R.string.first_crack));
@@ -535,8 +569,8 @@ public class MainFragment extends Fragment implements
     public void secondCrack() {
         mMainViewModel.setIsSecondCrack(true);
         if (System.currentTimeMillis()/1000 - mStartTime != 0) {
-            Long sec = System.currentTimeMillis()/1000 - mStartTime;
-            mMainViewModel.setSecondCrackTime(sec.intValue());
+            int sec = (int)System.currentTimeMillis()/1000 - mStartTime;
+            mMainViewModel.setSecondCrackTime(sec);
             mChart.addEntry(0, Float.parseFloat(mNowTemp), sec);
         }
         mChart.addXAxisLimitLine(getString(R.string.second_crack));
@@ -545,40 +579,61 @@ public class MainFragment extends Fragment implements
     }
 
     @Override
-    public void startAction(final boolean action) {
-        if (Singleton.getInstance().getBLEDevice() != null && this.getActionStart()) {
-            String msg = getString(R.string.exit_beans);
+    public void actionBean(final boolean action) {
+        if (mBluetoothService.getState() == 2 && this.getActionStart()) {
+            Log.d(mAPP.TAG(), "MainFragment::actionBean(), action: " + action);
             mMainViewModel.setIsImport(action);
-            if (action) {
-                mChart.refresh();
-                mMainViewModel.setIsFirstCrack(false);
-                mMainViewModel.setIsSecondCrack(false);
 
-                int index = 0;
-                ArrayList<Temperature> tempTemperatureList = new ArrayList<>();
-                for(int i = mTemperatureList.size(); i >= 1; i--) {
-                    if (index >= 5) {
-                        break;
-                    }
-                    tempTemperatureList.add(mTemperatureList.get(i-1));
-                    index++;
+            Thread t = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    HashMap<String, Object> map = new HashMap<>();
+                    map.put("action", "inBean");
+                    map.put("in", action);
+
+                    bluetoothWrite(new JSONObject(map));
+
+                    mActivity.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            String msg = getString(R.string.exit_beans);
+                            if (action) {
+                                mChart.refresh();
+                                mMainViewModel.setIsFirstCrack(false);
+                                mMainViewModel.setIsSecondCrack(false);
+
+                                int index = 0;
+                                ArrayList<Temperature> tempTemperatureList = new ArrayList<>();
+                                for(int i = mTemperatureList.size(); i >= 1; i--) {
+                                    if (index >= 5) {
+                                        break;
+                                    }
+                                    tempTemperatureList.add(mTemperatureList.get(i-1));
+                                    index++;
+                                }
+
+                                Collections.reverse(tempTemperatureList);
+                                for(Temperature model : tempTemperatureList) {
+                                    mChart.addEntry(0, model.getTemp(), model.getSeconds());
+                                }
+
+                                msg = getString(R.string.enter_beans);
+                                mChart.addXAxisLimitLine(getString(R.string.enter_beans));
+                            } else {
+                                setActionStart(false);
+                            }
+                            alert(msg);
+                        }
+                    });
                 }
+            });
 
-                Collections.reverse(tempTemperatureList);
-                for(Temperature model : tempTemperatureList) {
-                    mChart.addEntry(0, model.getTemp(), model.getSeconds());
-                }
-
-                msg = getString(R.string.enter_beans);
-                mChart.addXAxisLimitLine(getString(R.string.enter_beans));
-            } else {
-                setActionStart(false);
-            }
-
-            alert(msg);
-        } else if(Singleton.getInstance().getBLEDevice() == null) {
+            t.start();
+        } else if(mBluetoothService.getBluetoothDevice() == null) {
+            Log.e(mAPP.TAG(), "MainFragment::actionBean(), " + getString(R.string.no_device_connection));
             alert(getString(R.string.no_device_connection));
         } else if(!this.getActionStart()) {
+            Log.e(mAPP.TAG(), "MainFragment::actionBean(), " + getString(R.string.no_action_start));
             alert(getString(R.string.no_action_start));
         }
     }
@@ -593,100 +648,41 @@ public class MainFragment extends Fragment implements
         return this.mActionStart;
     }
 
-    private boolean checkBluetoothConn() {
-        if (Singleton.getInstance().getBLEDevice() == null && Singleton.getInstance().getBLESocket() == null) {
-            Log.d(info.TAG(), "MainFragment::checkBluetoothConn(), no device connection");
-            return false;
-        }
-
-        return true;
-    }
-
     private void updateTemp(String data) {
         try {
             JSONObject jsonObject = new JSONObject(data);
 
             HashMap<String, Object>  map = Convert.toMap(jsonObject);
             mMainViewModel.updateTemp(map);
+            Log.d(mAPP.TAG(), "sec:" + data);
 
-            if (mStartTime == 0L) {
-                mStartTime = System.currentTimeMillis()/1000;
-            }
-
-            Long sec = 1L;
+            int sec = 1;
             if (System.currentTimeMillis()/1000 - mStartTime != 0) {
-                sec = System.currentTimeMillis()/1000 - mStartTime;
+                sec = (int)System.currentTimeMillis()/1000 - mStartTime;
             }
 
             if (this.getActionStart()) {
                 mTempRecord.put(sec, jsonObject);
                 mNowTemp = String.valueOf(map.get("s"));
-                if (mModel == "a") {
+                if (mModel.equals("a")) {
                     mNowTemp = String.valueOf(map.get("b"));
                 }
 
                 Temperature model = new Temperature(Float.parseFloat(mNowTemp), sec);
                 mTemperatureList.add(model);
                 mChart.addEntry(0, Float.parseFloat(mNowTemp), sec);
-                mMainViewModel.setRunTime(sec.intValue());
+                mMainViewModel.setRunTime(sec);
             }
         } catch (JSONException e) {
-            Log.e(info.TAG(), "MainFragment::updateTemp(), error :  " + e.getMessage());
+            Log.e(mAPP.TAG(), "MainFragment::updateTemp(), error :  " + e.getMessage());
         }
-    }
-
-    /**
-     * 讀取從藍牙裝置傳送資料
-     */
-    private void read() {
-        Log.d(info.TAG(), "MainFragment::read()");
-        Thread t = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    while (true) {
-                        try {
-                            int bytes;
-                            byte[] buffer = new byte[1024];
-                            String end = "\n";
-                            StringBuilder curMsg = new StringBuilder();
-
-
-                            while (-1 != (bytes = mInputStream.read(buffer))) {
-                                curMsg.append(new String(buffer, 0, bytes, Charset.forName("ISO-8859-1")));
-                                int endIdx = curMsg.indexOf(end);
-                                if (endIdx != -1) {
-                                    String fullMessage = curMsg.substring(0, endIdx + end.length());
-                                    curMsg.delete(0, endIdx + end.length());
-
-                                    // Now send fullMessage
-                                    // Send the obtained bytes to the UI Activity
-                                    Log.d(info.TAG(), "MainFragment::read(), data:" + fullMessage);
-                                    Message msg = new Message();
-                                    msg.obj = fullMessage;
-
-                                    mReadHandler.sendMessage(msg);
-                                }
-                            }
-                        } catch (IOException e) {
-                            Log.d(info.TAG(), "MainFragment::read(), IOException Error: " + e.getMessage());
-                            break;
-                        }
-                    }
-                } catch (Exception e) {
-                    Log.e(info.TAG(), "MainFragment::read(), Exception Error: " + e.getMessage());
-                }
-            }
-        });
-
-        t.start();
     }
 
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            Log.d(info.TAG(), "MainFragment::mReceiver, BLE Connection stat:" + action);
+            Log.d(mAPP.TAG(), "MainFragment::mReceiver, BLE Connection stat:" + action);
 
             if (action.equals(BluetoothDevice.ACTION_FOUND))  //收到bluetooth狀態改變
             {
@@ -720,14 +716,7 @@ public class MainFragment extends Fragment implements
      * get device of Paired
      */
     private void  getPairedDevices() {
-        mPairedDevices = Singleton.getInstance().getBLEAdapter().getBondedDevices();
-        Log.d(info.TAG(), "MainFragment::getPairedDevices(), Paired Devices size"+mPairedDevices.size());
-        ArrayList<BluetoothDevice> list = new ArrayList<>();
-        for(BluetoothDevice device : mPairedDevices) {
-            list.add(device);
-        }
-
-        mDeviceListAdapter.setData(BluetoothDeviceAdapter.PAIRED_ITEM_TYPE, list);
+        mDeviceListAdapter.setData(BluetoothDeviceAdapter.PAIRED_ITEM_TYPE, mBluetoothService.pairedDevices());
     }
 
     /**
@@ -739,84 +728,16 @@ public class MainFragment extends Fragment implements
             Log.d(info.TAG(), "MainFragment::listener, item :" + position);
             mAlertDialog.dismiss();
             mDeviceConnectionDialog.show();
-            final int p = position;
-            Thread t = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    Message msg = Message.obtain();
-                    BluetoothDevice device= mDeviceListAdapter.getDevice(p);
-                    Singleton.getInstance().setBLEDevice(device);
 
-                    closeBTEConnection();
+            BluetoothDevice device = mDeviceListAdapter.getDevice(position);
+            mBluetoothService.setBluetoothDevice(device);
+            mIsBound = true;
 
-                    try {
-                        Singleton.getInstance().setBLESocket(device.createRfcommSocketToServiceRecord(info.BluetoothUUID()));
-
-                        try {
-                            Singleton.getInstance().getBLESocket().connect();
-                            mInputStream = Singleton.getInstance().getBLESocket().getInputStream();
-                            mOutputStream = Singleton.getInstance().getBLESocket().getOutputStream();
-
-                            msg.obj = "device " + device.getName() + " Connection success";
-
-                        } catch (IOException ioe) {
-                            try {
-                                Singleton.getInstance().setBLESocket((BluetoothSocket) device.getClass().getMethod("createRfcommSocket", new Class[] {int.class}).invoke(device,1));
-                                Singleton.getInstance().getBLESocket().connect();
-
-                                mInputStream = Singleton.getInstance().getBLESocket().getInputStream();
-
-                                msg.obj = "device " + device.getName() + " Connection success";
-                            } catch (Exception e) {
-                                Log.e(info.TAG(), "MainFragment::listener, Exception error : " + e.getMessage());
-                                msg.obj = "device " + device.getName() + " Connection fail";
-                            }
-                        }
-                    } catch (IOException ioe) {
-                        Log.e(info.TAG(), "MainFragment::listener, IOException error : " + ioe.getMessage());
-                        msg.obj = "device " + device.getName() + " Connection fail";
-                    }
-
-                    mConnHandler.sendMessage(msg);
-                }
-            });
-
-            t.start();
+            // TODO move to handle
+            mDeviceConnectionDialog.dismiss();
+            mToolBar.setTitle(mContext.getString(R.string.app_name) +  " " + device.getName() + " 連線中...");
         }
     };
-
-    private void closeBTEConnection()
-    {
-        Log.d(info.TAG(), "MainFragment::closeBTEConnection");
-
-        if (mInputStream != null) {
-            try {
-                mInputStream.close();
-            } catch (Exception e) {
-                Log.e(info.TAG(), "MainFragment::closeBTEConnection, bluetooth InputStream close Exception error : " + e.getMessage());
-            }
-            mInputStream = null;
-        }
-
-        if (mOutputStream != null) {
-            try {
-                mOutputStream.close();
-            } catch(Exception e) {
-                Log.e(info.TAG(), "MainFragment::closeBTEConnection, bluetooth OutputStream close Exception error : " + e.getMessage());
-            }
-            mOutputStream = null;
-        }
-
-        if (Singleton.getInstance().getBLESocket() != null) {
-            try {
-                Singleton.getInstance().getBLESocket().close();
-            } catch (Exception e) {
-                Log.e(info.TAG(), "MainFragment::closeBTEConnection, bluetooth socket close Exception error : " + e.getMessage());
-            }
-
-            Singleton.getInstance().setBLESocket(null);
-        }
-    }
 
     private void exitAPP() {
         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(mContext);
@@ -845,13 +766,12 @@ public class MainFragment extends Fragment implements
         mTempListView = (ListView) view.findViewById(R.id.temp_ListView);
         mTempListView.setAdapter(mAutoTempAdapter);
 
-        // TODO
         ArrayList<Temperature> temperatures = new ArrayList<>();
-        temperatures.add(new Temperature(30, 40L));
-        temperatures.add(new Temperature(40, 100L));
-        temperatures.add(new Temperature(50, 150L));
-        temperatures.add(new Temperature(100, 200L));
-        temperatures.add(new Temperature(200, 300L));
+        temperatures.add(new Temperature(100, 20));
+        temperatures.add(new Temperature(20, 30));
+        temperatures.add(new Temperature(200, 40));
+        temperatures.add(new Temperature(20, 50));
+        temperatures.add(new Temperature(250, 300));
         mAutoTempAdapter.setData(temperatures);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(mActivity);
@@ -862,10 +782,20 @@ public class MainFragment extends Fragment implements
         builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                ;
-                for (int i = 0; i < mAutoTempAdapter.getData().size(); i++) {
-                    Temperature t = mAutoTempAdapter.getData().get(i);
-                    Log.e(info.TAG(), "time: " + t.getSeconds() + ", temp:" + t.getTemp());
+                HashMap<String, Object> map = new HashMap<>();
+                map.put("action", "jobs");
+
+                try {
+                    for (int i = 0; i < mAutoTempAdapter.getData().size(); i++) {
+                        Temperature t = mAutoTempAdapter.getData().get(i);
+                        Log.d(info.TAG(), "time: " + t.getSeconds() + ", temp:" + t.getTemp());
+                        map.put("sec", t.getSeconds());
+                        map.put("temp", t.getTemp());
+                        bluetoothWrite(new JSONObject(map));
+                        Thread.sleep(3000);
+                    }
+                } catch (Exception e) {
+                    e.getLocalizedMessage();
                 }
                 dialog.cancel();
             }
@@ -884,43 +814,19 @@ public class MainFragment extends Fragment implements
      */
     private void bluetoothWrite(final JSONObject jsonObject)
     {
-        try {
-            mOutputStream.write(jsonObject.toString().getBytes());
-        } catch (IOException e) {
-            Log.e(info.TAG(), "error :  " + e.getMessage());
-        }
+        mBluetoothService.write(jsonObject.toString().getBytes());
     }
 
     /**
-     * 是否支援藍牙
-     * @return
+     * Alert Message
+     * @param msg String
      */
-    private boolean supportBluetooth()
-    {
-        if (Singleton.getInstance().getBLEAdapter() == null) {
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * 藍牙是否啟動
-     * @return
-     */
-    private boolean enableBluetooht()
-    {
-        if (!Singleton.getInstance().getBLEAdapter().isEnabled()) {
-            return false;
-        }
-
-        return true;
-    }
-
     private void alert(String msg) {
-        Snackbar.make(mView, msg, Snackbar.LENGTH_SHORT).show();
+        try {
+            Snackbar.make(mView, msg, Snackbar.LENGTH_SHORT).show();
+        } catch (Exception e) {
+
+        }
+
     }
 }
-
-
-

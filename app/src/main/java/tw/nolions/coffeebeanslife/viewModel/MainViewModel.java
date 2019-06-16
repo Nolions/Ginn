@@ -14,6 +14,7 @@ import tools.Convert;
 import tools.info;
 import tw.nolions.coffeebeanslife.R;
 import tw.nolions.coffeebeanslife.callback.ViewModelCallback;
+import tw.nolions.coffeebeanslife.service.Application.MainApplication;
 
 public class MainViewModel extends ViewModel {
 
@@ -24,13 +25,15 @@ public class MainViewModel extends ViewModel {
 
     private Activity mActivity;
 
-    public MainViewModel(Fragment fragment) {
+    private String mTag;
+
+    public MainViewModel(Fragment fragment, MainApplication app) {
         mActivity = fragment.getActivity();
 
         try {
             mViewModelCallback = (ViewModelCallback) fragment;
         } catch (Exception e) {
-            Log.e(info.TAG(), e.getMessage());
+            Log.e(getTag(), e.getMessage());
         }
 
         mBeansTemp = new ObservableField<>();
@@ -45,11 +48,20 @@ public class MainViewModel extends ViewModel {
         mIsFirstCrack = new ObservableBoolean(true);
         mIsSecondCrack = new ObservableBoolean(true);
 
+        setTag(app.TAG());
         init();
     }
 
     private void init() {
         this.setTargetTemp("0");
+    }
+
+    private void setTag(String tag) {
+        mTag = tag;
+    }
+
+    private String getTag() {
+        return mTag;
     }
 
     public void setIsImport(boolean status)
@@ -135,7 +147,7 @@ public class MainViewModel extends ViewModel {
      * @param fromUser
      */
     public void onTargetTempChanged(SeekBar seekBar, int progressValue, boolean fromUser) {
-        Log.d(info.TAG(), "MainViewModel::onTargetTempChanged(), progress:"+ progressValue );
+        Log.d(mTag, "MainViewModel::onTargetTempChanged(), progress:"+ progressValue );
         this.setTargetTemp(String.valueOf(progressValue));
     }
 
@@ -144,7 +156,7 @@ public class MainViewModel extends ViewModel {
      * @param seekBar
      */
     public void onSendTargetTemp(SeekBar seekBar) {
-        Log.d(info.TAG(), "MainViewModel::onSendTargetTemp(), now Target temp :"+ getTargetTemp());
+        Log.d(getTag(), "MainViewModel::onSendTargetTemp(), now Target temp :"+ getTargetTemp());
         mViewModelCallback.updateTargetTemp(this.getTargetTemp());
     }
 
@@ -153,8 +165,8 @@ public class MainViewModel extends ViewModel {
      * @return bool
      */
     public boolean startBeansClick() {
-        Log.d(info.TAG(), "MainViewModel::startBeansClick()");
-        mViewModelCallback.startAction(true);
+        Log.d(getTag(), "MainViewModel::startBeansClick()");
+        mViewModelCallback.actionBean(true);
         return false;
     }
 
@@ -163,8 +175,8 @@ public class MainViewModel extends ViewModel {
      * @return bool
      */
     public boolean stopBeansClick() {
-        Log.d(info.TAG(), "MainViewModel::stopBeansClick()");
-        mViewModelCallback.startAction(false);
+        Log.d(getTag(), "MainViewModel::stopBeansClick()");
+        mViewModelCallback.actionBean(false);
         return true;
     }
 
@@ -172,7 +184,7 @@ public class MainViewModel extends ViewModel {
      * 一爆按鈕
      */
     public void onFirstCrack() {
-        Log.d(info.TAG(), "MainViewModel::onFirstCrack()");
+        Log.d(getTag(), "MainViewModel::onFirstCrack()");
         mViewModelCallback.firstCrack();
     }
 
@@ -180,7 +192,7 @@ public class MainViewModel extends ViewModel {
      * 二爆按鈕
      */
     public void onSecondCrack() {
-        Log.d(info.TAG(), "MainViewModel::onSecondCrack()");
+        Log.d(getTag(), "MainViewModel::onSecondCrack()");
         mViewModelCallback.secondCrack();
     }
 
