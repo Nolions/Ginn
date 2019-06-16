@@ -21,7 +21,6 @@ import java.util.Set;
 import java.util.UUID;
 
 import androidx.annotation.Nullable;
-import tools.info;
 
 public class BluetoothService extends Service {
     private Handler mHandler = new Handler();
@@ -363,7 +362,7 @@ public class BluetoothService extends Service {
                             String fullMessage = curMsg.substring(0, endIdx + end.length());
                             curMsg.delete(0, endIdx + end.length());
 
-                            Log.d(info.TAG(), "Read Message:" + fullMessage);
+                            Log.d(getTag(), "Read Message:" + fullMessage);
                             mHandler.obtainMessage(WHAT_READ, bytes, -1, fullMessage).sendToTarget();
                         }
                     }

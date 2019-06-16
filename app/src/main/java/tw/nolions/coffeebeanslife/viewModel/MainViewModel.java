@@ -11,7 +11,6 @@ import android.widget.SeekBar;
 import java.util.HashMap;
 
 import tools.Convert;
-import tools.info;
 import tw.nolions.coffeebeanslife.R;
 import tw.nolions.coffeebeanslife.callback.ViewModelCallback;
 import tw.nolions.coffeebeanslife.service.Application.MainApplication;

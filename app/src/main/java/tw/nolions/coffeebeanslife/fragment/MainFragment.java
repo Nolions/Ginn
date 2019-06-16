@@ -42,7 +42,6 @@ import android.widget.ListView;
 
 import androidx.annotation.Nullable;
 import tools.Convert;
-import tools.info;
 import tw.nolions.coffeebeanslife.MainActivity;
 import tw.nolions.coffeebeanslife.Singleton;
 import tw.nolions.coffeebeanslife.callback.ViewModelCallback;
@@ -53,15 +52,11 @@ import com.github.mikephil.charting.charts.LineChart;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.lang.reflect.Array;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Set;
 
 import tw.nolions.coffeebeanslife.R;
 import tw.nolions.coffeebeanslife.model.Temperature;
@@ -126,7 +121,7 @@ public class MainFragment extends Fragment implements
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            Log.d(info.TAG(), "what:" + msg.what+ " obj:" + msg.obj);
+            Log.d(mAPP.TAG(), "what:" + msg.what+ " obj:" + msg.obj);
             switch (msg.what) {
                 case 0:
                 case 1:
@@ -205,7 +200,7 @@ public class MainFragment extends Fragment implements
         mModel = "m";
 
         mDeviceListAdapter = new BluetoothDeviceAdapter(this.mContext);
-        mAutoTempAdapter = new AutoTempAdapter(this.mContext);
+        mAutoTempAdapter = new AutoTempAdapter(this.mContext, mAPP);
         mTempRecord = new HashMap<>();
         mTemperatureList = new ArrayList<>();
 
@@ -511,7 +506,7 @@ public class MainFragment extends Fragment implements
                 String filename = new SimpleDateFormat("yyyyMMddhhmmss").format(date);
                 mChart.saveToImage(filename);
 
-                new ExportToCSVAsyncTask(mContext, filename).execute(mTempRecord);
+                new ExportToCSVAsyncTask(mContext, mAPP, filename).execute(mTempRecord);
 
                 break;
             case R.id.nav_stopConnect:
@@ -753,7 +748,7 @@ public class MainFragment extends Fragment implements
     private ListView.OnItemClickListener listener = new ListView.OnItemClickListener(){
         @Override
         public void onItemClick(AdapterView<?> arg0, View arg1, int position, long arg3) {
-            Log.d(info.TAG(), "MainFragment::listener, item :" + position);
+            Log.d(mAPP.TAG(), "MainFragment::listener, item :" + position);
             mAlertDialog.dismiss();
             mDeviceConnectionDialog.show();
 
@@ -816,7 +811,7 @@ public class MainFragment extends Fragment implements
                 try {
                     for (int i = 0; i < mAutoTempAdapter.getData().size(); i++) {
                         Temperature t = mAutoTempAdapter.getData().get(i);
-                        Log.d(info.TAG(), "time: " + t.getSeconds() + ", temp:" + t.getTemp());
+                        Log.d(mAPP.TAG(), "time: " + t.getSeconds() + ", temp:" + t.getTemp());
                         map.put("sec", t.getSeconds());
                         map.put("temp", t.getTemp());
                         bluetoothWrite(new JSONObject(map));
@@ -847,7 +842,7 @@ public class MainFragment extends Fragment implements
 
     /**
      * Alert Message
-     * @param msg String
+     * @param msg 訊息文字內容
      */
     private void alert(String msg) {
         try {

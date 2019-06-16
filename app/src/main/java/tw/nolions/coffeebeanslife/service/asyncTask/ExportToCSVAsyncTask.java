@@ -18,33 +18,35 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
-import tools.info;
 import tw.nolions.coffeebeanslife.R;
+import tw.nolions.coffeebeanslife.service.Application.MainApplication;
 import tw.nolions.coffeebeanslife.widget.SmallProgressDialogUtil;
 
-public class ExportToCSVAsyncTask extends AsyncTask<HashMap<Long, JSONObject>, Boolean, Boolean> {
+public class ExportToCSVAsyncTask extends AsyncTask<HashMap<Integer, JSONObject>, Boolean, Boolean> {
     private Context context;
     private SmallProgressDialogUtil smallProgressDialog;
     private String fileName;
+    private String mTag;
 
-    public ExportToCSVAsyncTask(Context context, String fileName) {
+    public ExportToCSVAsyncTask(Context context, MainApplication app, String fileName) {
         this.context = context;
         this.fileName = fileName;
+        setTag(app.TAG());
     }
 
     @Override
     protected void onPreExecute() {
-        Log.e(info.TAG(),"ExportToCSVAsyncTask::onPreExecute()");
+        Log.e(getTag(),"ExportToCSVAsyncTask::onPreExecute()");
         smallProgressDialog = new SmallProgressDialogUtil(context, context.getResources().getString(R.string.exporting));
         smallProgressDialog.show();
     }
 
     @Override
-    protected Boolean doInBackground(HashMap<Long, JSONObject>... params) {
+    protected Boolean doInBackground(HashMap<Integer, JSONObject>... params) {
         try {
             Thread.sleep(2000);
         } catch (InterruptedException e) {
-            Log.e(info.TAG(),"ExportToCSV::doInBackground(), InternalError error : " + e.getMessage());
+            Log.e(getTag(),"ExportToCSV::doInBackground(), InternalError error : " + e.getMessage());
         }
 
         File exportDir = new File(Environment.getExternalStorageDirectory(), "");
@@ -66,8 +68,8 @@ public class ExportToCSVAsyncTask extends AsyncTask<HashMap<Long, JSONObject>, B
             csvWrite.writeNext(field);
 
             for(int i = 0; i< params.length; i++) {
-                Map<Long, JSONObject> param = new TreeMap<Long, JSONObject>(params[i]);
-                for(Long key: param.keySet()) {
+                Map<Integer, JSONObject> param = new TreeMap<Integer, JSONObject>(params[i]);
+                for(Integer key: param.keySet()) {
                     JSONObject jsonObject = param.get(key);
                     try {
                         String[] data = new String[]{
@@ -78,7 +80,7 @@ public class ExportToCSVAsyncTask extends AsyncTask<HashMap<Long, JSONObject>, B
                         };
                         csvWrite.writeNext(data);
                     } catch (JSONException e) {
-                        Log.e(info.TAG(), "ExportToCSV::doInBackground(), JSONException error: " + e.getMessage());
+                        Log.e(getTag(), "ExportToCSV::doInBackground(), JSONException error: " + e.getMessage());
                     }
 
                 }
@@ -86,7 +88,7 @@ public class ExportToCSVAsyncTask extends AsyncTask<HashMap<Long, JSONObject>, B
             csvWrite.close();
             return true;
         } catch (IOException e) {
-            Log.e(info.TAG(),"ExportToCSV::doInBackground(), IOException error : " + e.getMessage());
+            Log.e(getTag(),"ExportToCSV::doInBackground(), IOException error : " + e.getMessage());
         }
         return false;
     }
@@ -100,5 +102,13 @@ public class ExportToCSVAsyncTask extends AsyncTask<HashMap<Long, JSONObject>, B
         } else {
             Toast.makeText(context, context.getResources().getString(R.string.export_fail), Toast.LENGTH_LONG).show();
         }
+    }
+
+    private void setTag(String tag) {
+        mTag = tag;
+    }
+
+    private String getTag() {
+        return mTag;
     }
 }
