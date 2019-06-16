@@ -1,7 +1,6 @@
 package tw.nolions.coffeebeanslife.widget;
 
 import android.graphics.Color;
-import android.util.Log;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.AxisBase;
@@ -26,67 +25,57 @@ import tools.Convert;
 
 public class MPChart implements OnChartValueSelectedListener {
 
-//    private int[] mColors = new int[]{
-//            Color.parseColor("#5abdfc"),    //蓝色
-//            Color.parseColor("#eb73f6")    //紫色
-//    };
+    private int[] mColors = new int[]{
+            Color.parseColor("#eb73f6"),   //紫色
+            Color.parseColor("#000000")    //黑色
+    };
 
     private XAxis xAxis;
     private LineChart mLineChart;
     private String[] mDataSetNames;
     private String mDescribe;
-    private int mNum = 0;
+//    private int mNum = 0;
 
-    private Long mStartTime;
-    private ArrayList<Long> mXAixData = new ArrayList<>();
+    private ArrayList<Integer> mXAixData = new ArrayList<>();
 
     public MPChart(LineChart lineChart, String describe, String[] names) {
-        this.mLineChart = lineChart;
-        this.mDataSetNames = names;
-        this.mDescribe = describe;
-    }
-
-    public MPChart(LineChart lineChart,  String[] names) {
-        this.mLineChart = lineChart;
-        this.mDataSetNames = names;
-        this.mDescribe = "";
+        mLineChart = lineChart;
+        mDataSetNames = names;
+        mDescribe = describe;
     }
 
     @Override
     public void onValueSelected(Entry e, Highlight h) {
-
     }
 
     @Override
     public void onNothingSelected() {
-
     }
 
     /**
      * init
      */
     public void init() {
-        this.mLineChart.setOnChartValueSelectedListener(this);
+        mLineChart.setOnChartValueSelectedListener(this);
 
-        this.description(this.mDescribe);
-        this.border();
-        this.touchGestures();
-        this.xAxis();
-        this.yAxis();
-
-        this.refresh();
+        description(mDescribe);
+        border();
+        touchGestures();
+        xAxis();
+        yAxis();
+        refresh();
     }
 
     /**
      * setting chart's describe
-     * @param describe
+     * @param String describe
      */
     public void description(String describe) {
-        this.mLineChart.setNoDataText(describe);
+        mLineChart.setNoDataText(describe);
 
         Description description = new Description();
-        description.setTextColor(ColorTemplate.VORDIPLOM_COLORS[2]); description.setText("Chart Data");
-        this.mLineChart.setDescription(description);   //右下角说明文字
+        description.setTextColor(ColorTemplate.VORDIPLOM_COLORS[2]); description.setText(describe);
+        mLineChart.setDescription(description); // 圖表說明文字
     }
 
     /**
@@ -100,8 +89,8 @@ public class MPChart implements OnChartValueSelectedListener {
      * border setting
      */
     public void border() {
-        this.mLineChart.setDrawBorders(true);    //四周是不是有边框
-        this.mLineChart.setBorderWidth(0.1f);
+        mLineChart.setDrawBorders(true);
+        mLineChart.setBorderWidth(0.1f);
     }
 
     /**
@@ -109,14 +98,14 @@ public class MPChart implements OnChartValueSelectedListener {
      */
     public void touchGestures() {
         // enable touch gestures
-        this.mLineChart.setTouchEnabled(true);
+        mLineChart.setTouchEnabled(true);
 
         // if disabled, scaling can be done on x- and y-axis separately
-        this.mLineChart.setPinchZoom(false);
+        mLineChart.setPinchZoom(false);
 
         // enable scaling and dragging
-        this.mLineChart.setDragEnabled(true);
-        this.mLineChart.setScaleEnabled(true);
+        mLineChart.setDragEnabled(true);
+        mLineChart.setScaleEnabled(true);
     }
 
     /**
@@ -138,20 +127,19 @@ public class MPChart implements OnChartValueSelectedListener {
             @Override
             public String getFormattedValue(float value, AxisBase axis) {
                 if (mXAixData.size() > value) {
-                    Long sec = mXAixData.get((int) value);
-                return Convert.SecondConversion(sec.intValue());
+                    int sec = mXAixData.get((int) value);
+                return Convert.SecondConversion(sec);
                 }
                 return "0";
             }
         });
     }
 
-
     /**
      * yAxis setting
      */
     public void yAxis() {
-        this.mLineChart.getAxisRight().setEnabled(false);
+        mLineChart.getAxisRight().setEnabled(false);
     }
 
     /**
@@ -160,7 +148,7 @@ public class MPChart implements OnChartValueSelectedListener {
      * @param entries
      * @return LineDataSet
      */
-    private LineDataSet initLineDataSet(String name, ArrayList<Entry> entries) {
+    private LineDataSet initLineDataSet(String name, ArrayList<Entry> entries, int color) {
         //        int color = mColors[count % mColors.length];
         LineDataSet set = new LineDataSet(entries, name);
 //        set.setLineWidth(2.5f);
@@ -168,84 +156,100 @@ public class MPChart implements OnChartValueSelectedListener {
 //        set.setAxisDependency(YAxis.AxisDependency.LEFT);
 //        set.setValueTextSize(10f);
 
-        set.setColor(Color.parseColor("#5abdfc"));
-        set.setCircleColor(Color.parseColor("#5abdfc"));
-        set.setHighLightColor(Color.parseColor("#5abdfc"));
+        
+        set.setColor(color);
+        set.setCircleColor(color);
+        set.setHighLightColor(color);
         set.setValueTextSize(10f);
 //        set.setDrawValues(false);
-        set.setValueTextColor(Color.parseColor("#5abdfc"));
+        set.setValueTextColor(color);
         set.enableDashedHighlightLine(10f, 5f, 0f);
         set.setDrawFilled(true);
-        set.setFillColor(Color.parseColor("#5abdfc"));
+        set.setFillColor(color);
 
-//            set.setDrawVerticalHighlightIndicator(false);
+//          set.setDrawVerticalHighlightIndicator(false);
         set.setDrawHorizontalHighlightIndicator(false);
 
         return set;
     }
 
     public void refresh() {
-        mNum = 0;
-        this.mLineChart.fitScreen();
-        this.mLineChart.notifyDataSetChanged();
+//        mNum = 0;
+        mLineChart.fitScreen();
+        mLineChart.notifyDataSetChanged();
 
-        this.xAxis.removeAllLimitLines();
-        this.mXAixData = new ArrayList<>();
-        this.mLineChart.clear();
-        this.mLineChart.invalidate();
+        xAxis.removeAllLimitLines();
+        mXAixData = new ArrayList<>();
+        mLineChart.clear();
+        mLineChart.invalidate();
     }
 
     public void setChange() {
-        this.mLineChart.notifyDataSetChanged();
+        mLineChart.notifyDataSetChanged();
     }
 
     /**
-     * add line chart's entry
+     * Add line chart's entry
      * @param lineIndex
      * @param value
+     * @param sec
      */
-    public void addEntry(int lineIndex, float value, Long sec) {
-        mNum ++;
-        LineData data = this.mLineChart.getLineData();
+    public void addEntry(int lineIndex, float value, int sec) {
+//        mNum++;
+        LineData lineData = this.mLineChart.getLineData();
 
-        if (data == null) {
-            data = new LineData();
-            this.mLineChart.setData(data);
+        if (lineData == null) {
+            lineData = new LineData();
+            this.mLineChart.setData(lineData);
         }
 
-        ILineDataSet set = data.getDataSetByIndex(lineIndex);
+        setLineDataSet(lineData, lineIndex, value, mColors[0]);
+
+        mXAixData.add(sec);
+        lineData.notifyDataChanged();
+        setChange();
+        mLineChart.setVisibleXRangeMaximum(lineData.getEntryCount());
+        mLineChart.moveViewTo(lineData.getEntryCount(), 50f, YAxis.AxisDependency.LEFT);
+    }
+
+    public void addEntry(float value1, float value2, int sec) {
+//        mNum++;
+        LineData lineData = this.mLineChart.getLineData();
+
+        if (lineData == null) {
+            lineData = new LineData();
+            this.mLineChart.setData(lineData);
+        }
+
+        setLineDataSet(lineData, 0, value1, mColors[0]);
+        setLineDataSet(lineData, 1, value2, mColors[1]);
+
+        mXAixData.add(sec);
+        lineData.notifyDataChanged();
+        setChange();
+        mLineChart.setVisibleXRangeMaximum(lineData.getEntryCount());
+        mLineChart.moveViewTo(lineData.getEntryCount(), 50f, YAxis.AxisDependency.LEFT);
+    }
+
+    private void setLineDataSet(LineData lineData, int index, float value, int color) {
+        ILineDataSet set = lineData.getDataSetByIndex(index);
         if (set == null) {
             ArrayList<Entry> entries = new ArrayList<>();
             entries.add(new Entry(0, value));
 
-            mStartTime = System.currentTimeMillis()/1000;
-            mXAixData.add(0L);
+            mXAixData.add(0);
 
-            String name =  (String) Array.get(mDataSetNames, lineIndex);
-            set = this.initLineDataSet(name, entries);
-            data.addDataSet(set);
+            String name =  (String) Array.get(mDataSetNames, index);
+            set = initLineDataSet(name, entries, color);
+            lineData.addDataSet(set);
         }
 
-        mXAixData.add(sec);
-
-        // choose a random dataSet
-        int randomDataSetIndex = (int) (Math.random() * data.getDataSetCount());
-        ILineDataSet randomSet = data.getDataSetByIndex(randomDataSetIndex);
-
-        data.addEntry(new Entry(randomSet.getEntryCount(), value), randomDataSetIndex);
-        data.notifyDataChanged();
-
-        // let the chart know it's data has changed
-        this.setChange();
-
-        // TODO
-        this.mLineChart.setVisibleXRangeMaximum(data.getEntryCount());
-        this.mLineChart.moveViewTo(data.getEntryCount(), 50f, YAxis.AxisDependency.LEFT);
+        lineData.addEntry(new Entry(set.getEntryCount(), value), index);
     }
 
     public void addXAxisLimitLine(String label)
     {
-        LimitLine ll = new LimitLine(mNum, label);
+        LimitLine ll = new LimitLine(mLineChart.getLineData().getEntryCount()/2, label);
         ll.setLineColor(Color.RED);
         ll.setLineWidth(2f);
         ll.setTextColor(Color.GRAY);
