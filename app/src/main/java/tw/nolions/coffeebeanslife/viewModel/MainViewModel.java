@@ -11,9 +11,9 @@ import android.widget.SeekBar;
 import java.util.HashMap;
 
 import tools.Convert;
+import tw.nolions.coffeebeanslife.MainApplication;
 import tw.nolions.coffeebeanslife.R;
 import tw.nolions.coffeebeanslife.callback.ViewModelCallback;
-import tw.nolions.coffeebeanslife.service.Application.MainApplication;
 
 public class MainViewModel extends ViewModel {
 
@@ -63,23 +63,19 @@ public class MainViewModel extends ViewModel {
         return mTag;
     }
 
-    public void setIsImport(boolean status)
-    {
+    public void setIsImport(boolean status) {
         this.mIsImport.set(status);
     }
 
-    public boolean getIsImport()
-    {
+    public boolean getIsImport() {
         return mIsImport.get();
     }
 
-    public void setIsFirstCrack(boolean status)
-    {
+    public void setIsFirstCrack(boolean status) {
         this.mIsFirstCrack.set(status);
     }
 
-    public void setIsSecondCrack(boolean status)
-    {
+    public void setIsSecondCrack(boolean status) {
         this.mIsSecondCrack.set(status);
     }
 
@@ -92,15 +88,15 @@ public class MainViewModel extends ViewModel {
     }
 
     public void setBeansTemp(String temp) {
-        this.mBeansTemp.set(temp +  mActivity.getResources().getString(R.string.tempUnit));
+        this.mBeansTemp.set(temp + mActivity.getResources().getString(R.string.tempUnit));
     }
 
     public void setStoveTemp(String temp) {
-        this.mStoveTemp.set(temp +  mActivity.getResources().getString(R.string.tempUnit));
+        this.mStoveTemp.set(temp + mActivity.getResources().getString(R.string.tempUnit));
     }
 
     public void setEnvironmentTemp(String temp) {
-        this.mEnvironmentTemp.set(temp +  mActivity.getResources().getString(R.string.tempUnit));
+        this.mEnvironmentTemp.set(temp + mActivity.getResources().getString(R.string.tempUnit));
     }
 
     public void setFirstCrackTime(int seconds) {
@@ -131,6 +127,7 @@ public class MainViewModel extends ViewModel {
 
     /**
      * 更新View Model上溫度資訊
+     *
      * @param data
      */
     public void updateTemp(HashMap data) {
@@ -141,26 +138,29 @@ public class MainViewModel extends ViewModel {
 
     /**
      * 變更目標溫度
+     *
      * @param seekBar
      * @param progressValue
      * @param fromUser
      */
     public void onTargetTempChanged(SeekBar seekBar, int progressValue, boolean fromUser) {
-        Log.d(mTag, "MainViewModel::onTargetTempChanged(), progress:"+ progressValue );
+        Log.d(mTag, "MainViewModel::onTargetTempChanged(), progress:" + progressValue);
         this.setTargetTemp(String.valueOf(progressValue));
     }
 
     /**
      * 更新目標溫度
+     *
      * @param seekBar
      */
     public void onSendTargetTemp(SeekBar seekBar) {
-        Log.d(getTag(), "MainViewModel::onSendTargetTemp(), now Target temp :"+ getTargetTemp());
+        Log.d(getTag(), "MainViewModel::onSendTargetTemp(), now Target temp :" + getTargetTemp());
         mViewModelCallback.updateTargetTemp(this.getTargetTemp());
     }
 
     /**
      * 下豆按鈕
+     *
      * @return bool
      */
     public boolean startBeansClick() {
@@ -171,6 +171,7 @@ public class MainViewModel extends ViewModel {
 
     /**
      * 出豆按鈕
+     *
      * @return bool
      */
     public boolean stopBeansClick() {
@@ -198,9 +199,8 @@ public class MainViewModel extends ViewModel {
     /**
      * 重設溫度資訊列時間資訊
      */
-    public void refresh()
-    {
-         this.setRunTime(-1);
+    public void refresh() {
+        this.setRunTime(-1);
         this.setFirstCrackTime(-1);
         this.setSecondCrackTime(-1);
     }

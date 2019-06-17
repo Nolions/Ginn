@@ -39,10 +39,8 @@ public class BluetoothService extends Service {
     private String mTag;
     private String mDeviceName;
     private String mDeviceAddress;
-    private Intent mIntent;
 
     // CONST
-    final private String DEFAULT_TAG = "BluetoothService";
     final private int STATE_NONE = 0;
     final private int STATE_CONNECTING = 1;
     final private int STATE_CONNECTED = 2;
@@ -62,7 +60,7 @@ public class BluetoothService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        mIntent = intent;
+        Intent mIntent = intent;
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBluetoothAdapter != null) {
             setTag((String) intent.getExtras().get("TAG"));
@@ -74,7 +72,7 @@ public class BluetoothService extends Service {
 
     @Override
     public void onDestroy() {
-        if(mHandler != null) {
+        if (mHandler != null) {
             mHandler = null;
         }
 
@@ -89,24 +87,23 @@ public class BluetoothService extends Service {
 
 
     public boolean isSupport() {
-        return mBluetoothAdapter == null?false:true;
+        return mBluetoothAdapter == null ? false : true;
     }
 
     public boolean isEnable() {
         return mBluetoothAdapter.isEnabled();
     }
 
-    public ArrayList<BluetoothDevice> pairedDevices () {
+    public ArrayList<BluetoothDevice> pairedDevices() {
         ArrayList<BluetoothDevice> list = new ArrayList<>();
-        for(BluetoothDevice device : mBluetoothAdapter.getBondedDevices()) {
+        for (BluetoothDevice device : mBluetoothAdapter.getBondedDevices()) {
             list.add(device);
         }
 
         return list;
     }
 
-    public void setHandler(Handler handler)
-    {
+    public void setHandler(Handler handler) {
         mHandler = handler;
     }
 
@@ -159,8 +156,8 @@ public class BluetoothService extends Service {
     }
 
     private String getTag() {
-        if (mTag == "") {
-            return DEFAULT_TAG;
+        if (mTag.equals("")) {
+            return "BluetoothService";
         }
         return mTag;
     }
@@ -266,8 +263,7 @@ public class BluetoothService extends Service {
     }
 
     public class LocalBinder extends Binder {
-        public BluetoothService getInstance()
-        {
+        public BluetoothService getInstance() {
             return BluetoothService.this;
         }
     }
@@ -281,9 +277,14 @@ public class BluetoothService extends Service {
             mDevice = device;
 
             try {
-                // TODO
-                UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
-                tmp = device.createRfcommSocketToServiceRecord(getUUID());
+                if (getUUID() == null) {
+                    UUID uuid = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
+                    tmp = device.createRfcommSocketToServiceRecord(uuid);
+                } else {
+                    tmp = device.createRfcommSocketToServiceRecord(getUUID());
+                }
+
+
             } catch (IOException e) {
                 Log.e(getTag(), "Create Bluetooth Socket failed ", e);
             }
@@ -366,12 +367,8 @@ public class BluetoothService extends Service {
                             mHandler.obtainMessage(WHAT_READ, bytes, -1, fullMessage).sendToTarget();
                         }
                     }
-                } catch (IOException e) {
-                    Log.e(getTag(), "Connection Lost", e);
-                    connectionLost();
-                    break;
-                } catch (Exception e) {
-                    Log.e(getTag(), "Connection Lost", e);
+                } catch (IOException ioe) {
+                    Log.e(getTag(), "Connection Lost", ioe);
                     connectionLost();
                     break;
                 }
@@ -382,7 +379,8 @@ public class BluetoothService extends Service {
             try {
                 mSocket.close();
             } catch (IOException e) {
-                Log.e(getTag(), "close() of connect socket failed", e);}
+                Log.e(getTag(), "close() of connect socket failed", e);
+            }
         }
 
         public void write(byte[] bytes) {

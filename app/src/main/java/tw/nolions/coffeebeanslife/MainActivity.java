@@ -2,14 +2,12 @@ package tw.nolions.coffeebeanslife;
 
 import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.view.Window;
 import android.view.WindowManager;
-import android.widget.Toast;
 
 import tw.nolions.coffeebeanslife.fragment.MainFragment;
-import tw.nolions.coffeebeanslife.service.BluetoothAcceptService;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -20,7 +18,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         mSavedInstanceState = savedInstanceState;
         requestWindowFeature(Window.FEATURE_NO_TITLE);
-        this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
         this.getWindow().setFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON, WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         setContentView(R.layout.activity_main);
 
@@ -41,18 +39,18 @@ public class MainActivity extends AppCompatActivity {
 //                Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
 //                startActivityForResult(enableBtIntent, BluetoothAcceptService.REQUEST_ENABLE_BT);
 //            } else {
-                this.FragmentTransaction();
+        this.FragmentTransaction();
 //            }
 //        }
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if(requestCode == BluetoothAcceptService.REQUEST_ENABLE_BT){
-            if (resultCode == RESULT_OK) {
-                this.FragmentTransaction();
-            }
-        }
+//        if (requestCode == BluetoothAcceptService.REQUEST_ENABLE_BT) {
+//            if (resultCode == RESULT_OK) {
+//                this.FragmentTransaction();
+//            }
+//        }
 
     }
 

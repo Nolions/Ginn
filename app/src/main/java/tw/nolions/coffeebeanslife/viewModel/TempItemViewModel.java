@@ -28,7 +28,7 @@ public class TempItemViewModel extends ViewModel {
 
     public void onAddTempClick() {
         int temp = Integer.valueOf(this.mTemp.get());
-        if (temp <300) {
+        if (temp < 300) {
             temp++;
         }
         this.setTemp(temp);
@@ -36,7 +36,7 @@ public class TempItemViewModel extends ViewModel {
 
     public void onLessTempClick() {
         int temp = Integer.valueOf(this.mTemp.get());
-        if (temp >0) {
+        if (temp > 0) {
             temp--;
         }
         this.setTemp(temp);

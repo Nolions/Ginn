@@ -19,7 +19,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import tw.nolions.coffeebeanslife.R;
-import tw.nolions.coffeebeanslife.service.Application.MainApplication;
+import tw.nolions.coffeebeanslife.MainApplication;
 import tw.nolions.coffeebeanslife.widget.SmallProgressDialogUtil;
 
 public class ExportToCSVAsyncTask extends AsyncTask<HashMap<Integer, JSONObject>, Boolean, Boolean> {

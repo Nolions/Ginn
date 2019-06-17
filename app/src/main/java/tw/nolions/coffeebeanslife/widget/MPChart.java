@@ -68,13 +68,15 @@ public class MPChart implements OnChartValueSelectedListener {
 
     /**
      * setting chart's describe
+     *
      * @param String describe
      */
     public void description(String describe) {
         mLineChart.setNoDataText(describe);
 
         Description description = new Description();
-        description.setTextColor(ColorTemplate.VORDIPLOM_COLORS[2]); description.setText(describe);
+        description.setTextColor(ColorTemplate.VORDIPLOM_COLORS[2]);
+        description.setText(describe);
         mLineChart.setDescription(description); // 圖表說明文字
     }
 
@@ -128,7 +130,7 @@ public class MPChart implements OnChartValueSelectedListener {
             public String getFormattedValue(float value, AxisBase axis) {
                 if (mXAixData.size() > value) {
                     int sec = mXAixData.get((int) value);
-                return Convert.SecondConversion(sec);
+                    return Convert.SecondConversion(sec);
                 }
                 return "0";
             }
@@ -144,6 +146,7 @@ public class MPChart implements OnChartValueSelectedListener {
 
     /**
      * init LineData's Set
+     *
      * @param name
      * @param entries
      * @return LineDataSet
@@ -156,7 +159,7 @@ public class MPChart implements OnChartValueSelectedListener {
 //        set.setAxisDependency(YAxis.AxisDependency.LEFT);
 //        set.setValueTextSize(10f);
 
-        
+
         set.setColor(color);
         set.setCircleColor(color);
         set.setHighLightColor(color);
@@ -190,6 +193,7 @@ public class MPChart implements OnChartValueSelectedListener {
 
     /**
      * Add line chart's entry
+     *
      * @param lineIndex
      * @param value
      * @param sec
@@ -239,7 +243,7 @@ public class MPChart implements OnChartValueSelectedListener {
 
             mXAixData.add(0);
 
-            String name =  (String) Array.get(mDataSetNames, index);
+            String name = (String) Array.get(mDataSetNames, index);
             set = initLineDataSet(name, entries, color);
             lineData.addDataSet(set);
         }
@@ -247,9 +251,8 @@ public class MPChart implements OnChartValueSelectedListener {
         lineData.addEntry(new Entry(set.getEntryCount(), value), index);
     }
 
-    public void addXAxisLimitLine(String label)
-    {
-        LimitLine ll = new LimitLine(mLineChart.getLineData().getEntryCount()/2, label);
+    public void addXAxisLimitLine(String label) {
+        LimitLine ll = new LimitLine(mLineChart.getLineData().getEntryCount() / 2, label);
         ll.setLineColor(Color.RED);
         ll.setLineWidth(2f);
         ll.setTextColor(Color.GRAY);
@@ -260,8 +263,7 @@ public class MPChart implements OnChartValueSelectedListener {
         xAxis.setDrawLimitLinesBehindData(true);
     }
 
-    public void saveToImage(String fileName)
-    {
+    public void saveToImage(String fileName) {
         mLineChart.saveToPath(fileName, "");
     }
 }

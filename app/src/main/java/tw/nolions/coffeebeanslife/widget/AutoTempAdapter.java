@@ -14,25 +14,28 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import tools.Convert;
+import tw.nolions.coffeebeanslife.MainApplication;
 import tw.nolions.coffeebeanslife.R;
+import tw.nolions.coffeebeanslife.databinding.ItemTempBinding;
 import tw.nolions.coffeebeanslife.model.Temperature;
 import tw.nolions.coffeebeanslife.viewModel.TempItemViewModel;
-import tw.nolions.coffeebeanslife.databinding.ItemTempBinding;
 
 public class AutoTempAdapter extends BaseAdapter {
 
-//    private ItemTempBinding mBinding;
+    //    private ItemTempBinding mBinding;
     private LayoutInflater mInflater;
     private ArrayList<Temperature> mTemperatureList;
 
     private Context mContext;
     final private int TYPE_Count = 2;
-    final public static int PAIRED_ITEM_TYPE = 0, NoPAIRED_ITEM_TYPE =1;
+    final public static int PAIRED_ITEM_TYPE = 0, NoPAIRED_ITEM_TYPE = 1;
+    private String mTag;
 
-    public AutoTempAdapter(Context c) {
-        this.mContext = c;
-        this.mInflater = LayoutInflater.from(c);
-        this.mTemperatureList = new ArrayList<>();
+    public AutoTempAdapter(Context context, MainApplication app) {
+        mContext = context;
+        mInflater = LayoutInflater.from(mContext);
+        mTemperatureList = new ArrayList<>();
+        setTag(app.TAG());
     }
 
     @Override
@@ -86,7 +89,7 @@ public class AutoTempAdapter extends BaseAdapter {
 
             @Override
             public void afterTextChanged(Editable s) {
-                Log.e(tools.info.TAG(), "item :"+ position + " temp :" + mBinding.editTemp.getText());
+                Log.d(getTag(), "item :" + position + " temp :" + mBinding.editTemp.getText());
 
                 Temperature t = mTemperatureList.get(position);
                 String nowTemp = mBinding.editTemp.getText().toString();
@@ -113,9 +116,8 @@ public class AutoTempAdapter extends BaseAdapter {
 
             @Override
             public void afterTextChanged(Editable s) {
-                Log.e(tools.info.TAG(), "item :"+ position + " minute :" + mBinding.editTemp.getText());
                 Temperature t = mTemperatureList.get(position);
-                String minuteStr = mBinding.editTimeSeconds.getText().toString();
+                String minuteStr = mBinding.editTimeMinute.getText().toString();
                 String secondsStr = mBinding.editTimeSeconds.getText().toString();
                 int minute = 0;
                 int seconds = 0;
@@ -123,11 +125,11 @@ public class AutoTempAdapter extends BaseAdapter {
                     minute = Integer.valueOf(minuteStr);
                 }
                 if (!secondsStr.matches("")) {
-                    seconds = Integer.valueOf(minuteStr);
+                    seconds = Integer.valueOf(secondsStr);
                 }
 
                 seconds = minute * 60 + seconds;
-                t.setSeconds(Long.valueOf(seconds));
+                t.setSeconds(seconds);
                 mTemperatureList.set(position, t);
             }
         });
@@ -145,9 +147,8 @@ public class AutoTempAdapter extends BaseAdapter {
 
             @Override
             public void afterTextChanged(Editable s) {
-                Log.e(tools.info.TAG(), "item :"+ position + " time seconds :" + mBinding.editTemp.getText());
                 Temperature t = mTemperatureList.get(position);
-                String minuteStr = mBinding.editTimeSeconds.getText().toString();
+                String minuteStr = mBinding.editTimeMinute.getText().toString();
                 String secondsStr = mBinding.editTimeSeconds.getText().toString();
                 int minute = 0;
                 int seconds = 0;
@@ -155,16 +156,16 @@ public class AutoTempAdapter extends BaseAdapter {
                     minute = Integer.valueOf(minuteStr);
                 }
                 if (!secondsStr.matches("")) {
-                    seconds = Integer.valueOf(minuteStr);
+                    seconds = Integer.valueOf(secondsStr);
                 }
 
                 seconds = minute * 60 + seconds;
-                t.setSeconds(Long.valueOf(seconds));
+                t.setSeconds(seconds);
             }
         });
 
         Temperature model = this.mTemperatureList.get(position);
-        HashMap<String, Integer> map = Convert.SecondToTimeMap(model.getSeconds().intValue());
+        HashMap<String, Integer> map = Convert.SecondToTimeMap(model.getSeconds());
         viewModel.setTimeMinute(map.get("m"));
         viewModel.setTimeSecond(map.get("s"));
         viewModel.setTemp(Math.round(model.getTemp()));
@@ -178,5 +179,13 @@ public class AutoTempAdapter extends BaseAdapter {
     public ArrayList<Temperature> getData() {
 
         return this.mTemperatureList;
+    }
+
+    private void setTag(String tag) {
+        mTag = tag;
+    }
+
+    private String getTag() {
+        return mTag;
     }
 }

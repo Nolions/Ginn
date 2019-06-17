@@ -11,7 +11,6 @@ import android.widget.TextView;
 import java.util.ArrayList;
 
 import tw.nolions.coffeebeanslife.R;
-import tw.nolions.coffeebeanslife.model.DeviceModel;
 
 public class BluetoothDeviceAdapter extends BaseAdapter {
 
@@ -20,7 +19,7 @@ public class BluetoothDeviceAdapter extends BaseAdapter {
 
     private Context mContext;
     final private int TYPE_Count = 2;
-    final public static int PAIRED_ITEM_TYPE = 0, NoPAIRED_ITEM_TYPE =1;
+    final public static int PAIRED_ITEM_TYPE = 0, NoPAIRED_ITEM_TYPE = 1;
 
     public BluetoothDeviceAdapter(Context c) {
         this.mContext = c;
@@ -48,7 +47,7 @@ public class BluetoothDeviceAdapter extends BaseAdapter {
 
     @Override
     public int getItemViewType(int position) {
-        return (position < mPairedDevices.size())? PAIRED_ITEM_TYPE: NoPAIRED_ITEM_TYPE;
+        return (position < mPairedDevices.size()) ? PAIRED_ITEM_TYPE : NoPAIRED_ITEM_TYPE;
     }
 
     @Override
@@ -75,7 +74,7 @@ public class BluetoothDeviceAdapter extends BaseAdapter {
                 break;
             case NoPAIRED_ITEM_TYPE:
                 device = this.mNoPairedDevices.get(position - mPairedDevices.size());
-                name =  device.getAddress();
+                name = device.getAddress();
 
 //                status = "裝置連接時將顯示裝置名稱";
                 break;
@@ -90,7 +89,7 @@ public class BluetoothDeviceAdapter extends BaseAdapter {
     public void clearData(int itemType) {
         if (itemType == NoPAIRED_ITEM_TYPE) {
             this.mNoPairedDevices.clear();
-        } else if(itemType == PAIRED_ITEM_TYPE) {
+        } else if (itemType == PAIRED_ITEM_TYPE) {
             this.mPairedDevices.clear();
         }
 
@@ -99,7 +98,7 @@ public class BluetoothDeviceAdapter extends BaseAdapter {
     public void setData(int itemType, ArrayList<BluetoothDevice> list) {
         if (itemType == NoPAIRED_ITEM_TYPE) {
             this.mNoPairedDevices = list;
-        } else if(itemType == PAIRED_ITEM_TYPE) {
+        } else if (itemType == PAIRED_ITEM_TYPE) {
             this.mPairedDevices = list;
         }
 
@@ -108,7 +107,7 @@ public class BluetoothDeviceAdapter extends BaseAdapter {
     public void addItem(int itemType, BluetoothDevice device) {
         if (itemType == NoPAIRED_ITEM_TYPE) {
             this.mNoPairedDevices.add(device);
-        } else if(itemType == PAIRED_ITEM_TYPE) {
+        } else if (itemType == PAIRED_ITEM_TYPE) {
             this.mPairedDevices.add(device);
         }
 

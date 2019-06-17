@@ -1,10 +1,10 @@
 package tw.nolions.coffeebeanslife.model;
 
 public class Temperature {
-    private Long seconds;
+    private int seconds;
     private float temp;
 
-    public Temperature(float temp, Long seconds) {
+    public Temperature(float temp, int seconds) {
         setTemp(temp);
         setSeconds(seconds);
     }
@@ -17,11 +17,11 @@ public class Temperature {
         return this.temp;
     }
 
-    public void setSeconds(Long seconds) {
+    public void setSeconds(int seconds) {
         this.seconds = seconds;
     }
 
-    public Long getSeconds() {
+    public int getSeconds() {
         return this.seconds;
     }
 }
