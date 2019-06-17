@@ -113,27 +113,7 @@ public class MainFragment extends Fragment implements
 
     private Boolean mIsBound = false;
 
-//    private Handler mConnHandler = new MainHandler();
-  private Handler mConnHandler = new Handler() {
-        @Override
-        public void handleMessage(Message msg) {
-            super.handleMessage(msg);
-            Log.d(mAPP.TAG(), "what:" + msg.what + " obj:" + msg.obj);
-            switch (msg.what) {
-                case 0:
-                case 1:
-                case 2:
-                    alert((String) msg.obj);
-                    break;
-                case 3:
-                    updateTemp((String) msg.obj);
-                    break;
-                case 4:
-                    break;
-
-            }
-        }
-    };
+    private Handler mConnHandler = new MainHandler(this);
 
     @NonNull
     public static MainFragment newInstance() {
@@ -801,7 +781,7 @@ public class MainFragment extends Fragment implements
                         Thread.sleep(3000);
                     }
                 } catch (Exception e) {
-                    e.getLocalizedMessage();
+                    Log.e(mAPP.TAG(), "MainFragment::setAutoModeTempAlertView(), Exception ", e);
                 }
                 dialog.cancel();
             }
@@ -839,7 +819,7 @@ public class MainFragment extends Fragment implements
     private static class MainHandler extends Handler {
         private MainFragment mFragment;
 
-        public MainHandler(MainFragment fragment) {
+        private MainHandler(MainFragment fragment) {
             WeakReference<MainFragment> weakReference = new WeakReference<>(fragment);
             mFragment = weakReference.get();
         }
