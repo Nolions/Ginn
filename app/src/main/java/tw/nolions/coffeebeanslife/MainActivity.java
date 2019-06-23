@@ -46,12 +46,13 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-//        if (requestCode == BluetoothAcceptService.REQUEST_ENABLE_BT) {
-//            if (resultCode == RESULT_OK) {
-//                this.FragmentTransaction();
-//            }
-//        }
+    }
 
+    @Override
+    public  void onBackPressed() {
+        if (getSupportFragmentManager().getBackStackEntryCount() > 0) {
+            getSupportFragmentManager().popBackStack();
+        }
     }
 
     private void FragmentTransaction() {

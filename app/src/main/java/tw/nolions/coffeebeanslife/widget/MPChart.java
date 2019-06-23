@@ -64,13 +64,10 @@ public class MPChart implements OnChartValueSelectedListener {
         xAxis();
         yAxis();
         refresh();
+        mXAixData.add(0);
     }
 
-    /**
-     * setting chart's describe
-     *
-     * @param String describe
-     */
+
     public void description(String describe) {
         mLineChart.setNoDataText(describe);
 
@@ -207,7 +204,7 @@ public class MPChart implements OnChartValueSelectedListener {
             this.mLineChart.setData(lineData);
         }
 
-        setLineDataSet(lineData, lineIndex, value, mColors[0]);
+        setLineDataSet(lineData, lineIndex, value, mColors[0], sec);
 
         mXAixData.add(sec);
         lineData.notifyDataChanged();
@@ -217,7 +214,6 @@ public class MPChart implements OnChartValueSelectedListener {
     }
 
     public void addEntry(float value1, float value2, int sec) {
-//        mNum++;
         LineData lineData = this.mLineChart.getLineData();
 
         if (lineData == null) {
@@ -225,8 +221,10 @@ public class MPChart implements OnChartValueSelectedListener {
             this.mLineChart.setData(lineData);
         }
 
-        setLineDataSet(lineData, 0, value1, mColors[0]);
-        setLineDataSet(lineData, 1, value2, mColors[1]);
+        setLineDataSet(lineData, 0, value1, mColors[0], sec);
+        setLineDataSet(lineData, 1, value2, mColors[1], sec);
+
+
 
         mXAixData.add(sec);
         lineData.notifyDataChanged();
@@ -235,18 +233,19 @@ public class MPChart implements OnChartValueSelectedListener {
         mLineChart.moveViewTo(lineData.getEntryCount(), 50f, YAxis.AxisDependency.LEFT);
     }
 
-    private void setLineDataSet(LineData lineData, int index, float value, int color) {
+    private void setLineDataSet(LineData lineData, int index, float value, int color, int sec ) {
         ILineDataSet set = lineData.getDataSetByIndex(index);
         if (set == null) {
             ArrayList<Entry> entries = new ArrayList<>();
             entries.add(new Entry(0, value));
 
-            mXAixData.add(0);
+//            mXAixData.add(0);
 
             String name = (String) Array.get(mDataSetNames, index);
             set = initLineDataSet(name, entries, color);
             lineData.addDataSet(set);
         }
+
 
         lineData.addEntry(new Entry(set.getEntryCount(), value), index);
     }

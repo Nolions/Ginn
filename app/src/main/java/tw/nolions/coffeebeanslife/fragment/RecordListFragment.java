@@ -28,6 +28,11 @@ public class RecordListFragment extends Fragment {
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+    }
+
+    @Override
     public void onDestroy() {
         super.onDestroy();
     }
@@ -60,6 +65,8 @@ public class RecordListFragment extends Fragment {
     public void onActivityCreated(@Nullable Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
     }
+
+
 
     private void init() {
         mListViewAdapter = new RecordListAdapter(getActivity());

@@ -1,6 +1,5 @@
 package tw.nolions.coffeebeanslife.fragment;
 
-import android.support.v4.app.FragmentManager;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -23,6 +22,7 @@ import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -65,13 +65,13 @@ import tw.nolions.coffeebeanslife.callback.ViewModelCallback;
 import tw.nolions.coffeebeanslife.databinding.FragmentMainBinding;
 import tw.nolions.coffeebeanslife.model.Temperature;
 import tw.nolions.coffeebeanslife.model.entity.RecordEntity;
+import tw.nolions.coffeebeanslife.model.recordDao;
 import tw.nolions.coffeebeanslife.service.Service.BluetoothService;
 import tw.nolions.coffeebeanslife.viewModel.MainViewModel;
 import tw.nolions.coffeebeanslife.widget.AutoTempAdapter;
 import tw.nolions.coffeebeanslife.widget.BluetoothDeviceAdapter;
 import tw.nolions.coffeebeanslife.widget.MPChart;
 import tw.nolions.coffeebeanslife.widget.SmallProgressDialogUtil;
-import tw.nolions.coffeebeanslife.model.recordDao;
 
 public class MainFragment extends Fragment implements
         Toolbar.OnCreateContextMenuListener,
@@ -122,6 +122,11 @@ public class MainFragment extends Fragment implements
     private RecordListFragment mRecordListFragment;
 
     private Handler mConnHandler = new MainHandler(this);
+
+    private int mFirstCrack = 0;
+    private int mSecondCrack = 0;
+    private int mInBean = 0;
+
 
     @NonNull
     public static MainFragment newInstance() {
@@ -315,16 +320,15 @@ public class MainFragment extends Fragment implements
                                 public void run() {
                                     // 控制接收溫度是否顯示在線圖上
                                     if (isChecked) {
-                                        Log.d(mAPP.TAG(), "MainFragment::initNavigationView(), statusDrawerSwitch: action start");
                                         mStartTime = (int) System.currentTimeMillis() / 1000;
                                         setActionStart(true);
-
                                     } else {
-                                        Log.e(mAPP.TAG(), "MainFragment::initNavigationView(), statusDrawerSwitch: action stop");
                                         mMainViewModel.setIsFirstCrack(false);
                                         mMainViewModel.setIsSecondCrack(false);
                                         setActionStart(false);
-
+                                        mFirstCrack = 0;
+                                        mSecondCrack = 0;
+                                        mInBean = 0;
                                         mChart.refresh();
                                         mMainViewModel.refresh();
                                     }
@@ -377,10 +381,10 @@ public class MainFragment extends Fragment implements
 
                     t.start();
                 } else if (mBluetoothService.getBondedDevices() == null) {
-                    Log.d(mAPP.TAG(), "MainFragment::modelDrawerSwitch::onCheckedChanged()" + getString(R.string.no_device_connection));
+                    Log.e(mAPP.TAG(), "MainFragment::modelDrawerSwitch::onCheckedChanged()" + getString(R.string.no_device_connection));
                     alert(getString(R.string.no_device_connection));
                 } else if (!getActionStart()) {
-                    Log.d(mAPP.TAG(), "MainFragment::modelDrawerSwitch::onCheckedChanged()" + getString(R.string.no_action_start));
+                    Log.e(mAPP.TAG(), "MainFragment::modelDrawerSwitch::onCheckedChanged()" + getString(R.string.no_action_start));
                     alert(getString(R.string.no_action_start));
                 }
             }
@@ -434,7 +438,6 @@ public class MainFragment extends Fragment implements
 
     @Override
     public boolean onOptionsItemSelected(MenuItem menuItem) {
-        Log.d(mAPP.TAG(), "MainFragment::onOptionsItemSelected(), onClick Options menu item...");
         switch (menuItem.getItemId()) {
             case R.id.action_conn:
                 if (!mBluetoothService.isSupport()) {
@@ -482,29 +485,17 @@ public class MainFragment extends Fragment implements
 
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-        Log.d(mAPP.TAG(), "MainFragment::onNavigationItemSelected(), onClick Navigation menu item...");
         switch (item.getItemId()) {
             case R.id.nav_record:
-                Log.d(mAPP.TAG(), "MainFragment::onNavigationItemSelected(), onClick nav Record item");
-
                 FragmentManager fm = ((MainActivity) this.getActivity()).getSupportFragmentManager();
                 FragmentTransaction transaction = fm.beginTransaction();
                 transaction.addToBackStack(mRecordListFragment.getClass().getName());
-                transaction.hide(this);
-//                if (!mRecordListFragment.isAdded()) {
-//                    transaction.add(R.id.container, mRecordListFragment);
-                    transaction.replace(R.id.container, mRecordListFragment);
-//                } else {
-//                    transaction.show(mRecordListFragment);
-//                    transaction.show(mRecordListFragment);
-//                }
-
+                transaction.replace(R.id.container, mRecordListFragment);
                 transaction.commit();
-
                 break;
             case R.id.nav_save:
-                Log.d(mAPP.TAG(), "MainFragment::onNavigationItemSelected(), onClick nav Save item");
-
+                mDeviceConnectionDialog.setText(getString(R.string.saving));
+                mDeviceConnectionDialog.show();
                 insertRecord();
                 break;
 //            case R.id.nav_export:
@@ -528,7 +519,6 @@ public class MainFragment extends Fragment implements
 
                 break;
             case R.id.nav_exit:
-                Log.d(mAPP.TAG(), "MainFragment::onNavigationItemSelected(), onClick nav Exit item");
                 exitAPP();
                 break;
 //            case R.id.nav_share:
@@ -546,32 +536,41 @@ public class MainFragment extends Fragment implements
     }
 
     private void insertRecord() {
-
-
-//
         new Thread(new Runnable() {
             @Override
             public void run() {
                 Gson gson = new Gson();
                 String json = gson.toJson(mTempRecord);
-                Log.e("test", "json:" + json);
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHH:mm:ss");
                 Date date = new Date();
-                RecordEntity entiy = new RecordEntity();
-                entiy.name = Convert.TimestampFormat(date.getTime()) + "_record";
-                entiy.runTime = mRunTime;
-                entiy.record = "";
-                entiy.create_at = date.getTime();
+                RecordEntity entity = new RecordEntity();
+                entity.name = Convert.TimestampFormat(date.getTime()) + "_record";
+                entity.runTime = mRunTime;
+                entity.record = json;
+                entity.create_at = date.getTime();
+                entity.inBeanIndex = mInBean;
+                entity.firstCrackIndex = mFirstCrack;
+                entity.secondCrackIndex = mSecondCrack;
 
-                mRecordDao.insert(entiy);
+                mRecordDao.insert(entity);
+                mActivity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            Thread.sleep(2000);
+                        } catch (InterruptedException e) {
+                            Log.e(getTag(),"InternalError error : " + e.getMessage());
+                        }
+
+                        mDeviceConnectionDialog.dismiss();
+                    }
+                });
             }
         }).start();
     }
 
     @Override
     public void updateTargetTemp(final String temp) {
-        Log.d(mAPP.TAG(), "updateTargetTemp:" + temp);
-
         Thread t = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -591,7 +590,7 @@ public class MainFragment extends Fragment implements
         if (System.currentTimeMillis() / 1000 - mStartTime != 0) {
             int sec = (int) System.currentTimeMillis() / 1000 - mStartTime;
             mMainViewModel.setFirstCrackTime(sec);
-            mChart.addEntry(Float.parseFloat(mBeanTemp), Float.parseFloat(mStoveTemp), sec);
+            mFirstCrack = mTempRecord.size();
         }
         mChart.addXAxisLimitLine(getString(R.string.first_crack));
     }
@@ -603,6 +602,8 @@ public class MainFragment extends Fragment implements
             int sec = (int) System.currentTimeMillis() / 1000 - mStartTime;
             mMainViewModel.setSecondCrackTime(sec);
             mChart.addEntry(Float.parseFloat(mBeanTemp), Float.parseFloat(mStoveTemp), sec);
+
+            mSecondCrack = mTempRecord.size();
         }
         mChart.addXAxisLimitLine(getString(R.string.second_crack));
 
@@ -612,7 +613,6 @@ public class MainFragment extends Fragment implements
     @Override
     public void actionBean(final boolean action) {
         if (mBluetoothService.getState() == 2 && getActionStart()) {
-            Log.d(mAPP.TAG(), "MainFragment::actionBean(), action: " + action);
             mMainViewModel.setIsImport(action);
 
             Thread t = new Thread(new Runnable() {
@@ -653,7 +653,9 @@ public class MainFragment extends Fragment implements
                                 }
 
                                 msg = getString(R.string.enter_beans);
+                                mInBean = mTempRecord.size();
                                 mChart.addXAxisLimitLine(getString(R.string.enter_beans));
+
                             } else {
                                 setActionStart(false);
                             }
@@ -702,7 +704,6 @@ public class MainFragment extends Fragment implements
                     mNowTemp = mBeanTemp;
                 }
 
-                Log.d(mAPP.TAG(), "sec:" + data + ", bean: " + mBeanTemp + ", stove:" + mStoveTemp);
                 Temperature model = new Temperature(Float.parseFloat(mNowTemp), mRunTime);
                 mChart.addEntry(
                         Float.parseFloat(mBeanTemp),
@@ -722,8 +723,6 @@ public class MainFragment extends Fragment implements
         @Override
         public void onReceive(Context context, Intent intent) {
             String action = intent.getAction();
-            Log.d(mAPP.TAG(), "MainFragment::mReceiver, bluetooth Connection stat:" + action);
-
             switch (action) {
                 case BluetoothDevice.ACTION_FOUND: //收到bluetooth狀態改變
                     BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
@@ -766,7 +765,6 @@ public class MainFragment extends Fragment implements
     private ListView.OnItemClickListener listener = new ListView.OnItemClickListener() {
         @Override
         public void onItemClick(AdapterView<?> arg0, View arg1, int position, long arg3) {
-            Log.d(mAPP.TAG(), "MainFragment::listener, item :" + position);
             mAlertDialog.dismiss();
             mDeviceConnectionDialog.show();
 
@@ -829,7 +827,6 @@ public class MainFragment extends Fragment implements
                 try {
                     for (int i = 0; i < mAutoTempAdapter.getData().size(); i++) {
                         Temperature t = mAutoTempAdapter.getData().get(i);
-                        Log.d(mAPP.TAG(), "time: " + t.getSeconds() + ", temp:" + t.getTemp());
                         map.put("sec", t.getSeconds());
                         map.put("temp", t.getTemp());
                         bluetoothWrite(new JSONObject(map));
@@ -882,7 +879,6 @@ public class MainFragment extends Fragment implements
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            Log.d(mFragment.mAPP.TAG(), "what:" + msg.what + " obj:" + msg.obj);
             switch (msg.what) {
                 case 0:
                 case 1:

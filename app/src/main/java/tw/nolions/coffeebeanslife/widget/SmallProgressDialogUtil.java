@@ -10,6 +10,7 @@ import tw.nolions.coffeebeanslife.R;
 
 public class SmallProgressDialogUtil {
     private AlertDialog mAlertDialog;
+    private TextView mTvTip;
 
     public SmallProgressDialogUtil(Context context) {
         initView(context, "載入中...");
@@ -19,8 +20,7 @@ public class SmallProgressDialogUtil {
         initView(context, tip);
     }
 
-    public void initView(Context context, String tip)
-    {
+    public void initView(Context context, String tip) {
         if (mAlertDialog == null) {
             mAlertDialog = new AlertDialog.Builder(context, R.style.CustomProgressDialog).create();
         }
@@ -29,14 +29,15 @@ public class SmallProgressDialogUtil {
         mAlertDialog.setView(loadView, 0, 0, 0, 0);
         mAlertDialog.setCanceledOnTouchOutside(false);
 
-        TextView tvTip = loadView.findViewById(R.id.tvTip);
-        tvTip.setText(tip);
-
-
+        mTvTip = loadView.findViewById(R.id.tvTip);
+        mTvTip.setText(tip);
     }
 
-    public void show()
-    {
+    public void setText(String text) {
+        mTvTip.setText(text);
+    }
+
+    public void show() {
         mAlertDialog.show();
     }
 

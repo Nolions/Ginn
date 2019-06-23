@@ -2,6 +2,9 @@ package tw.nolions.coffeebeanslife.widget;
 
 import android.app.Activity;
 import android.databinding.DataBindingUtil;
+import android.os.Bundle;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,9 +15,11 @@ import com.android.databinding.library.baseAdapters.BR;
 
 import java.util.List;
 
+import tw.nolions.coffeebeanslife.MainActivity;
 import tw.nolions.coffeebeanslife.MainApplication;
 import tw.nolions.coffeebeanslife.R;
 import tw.nolions.coffeebeanslife.databinding.ItemRecordBinding;
+import tw.nolions.coffeebeanslife.fragment.RecordFragment;
 import tw.nolions.coffeebeanslife.model.entity.RecordEntity;
 import tw.nolions.coffeebeanslife.model.recordDao;
 
@@ -97,23 +102,56 @@ public class RecordListAdapter extends BaseAdapter {
                     delete();
                     break;
                 case CLICK_VIEW:
-                    final RecordEntity record = mRecordList.get(mPosition);
-                    new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            mRecordDao.delete(record);
-
-                            mActivity.runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    Log.e("test", "data:" + record.record);
-                                }
-                            });
-                        }
-                    }).start();
+                    showRecordHistory();
+//                    final RecordEntity record = mRecordList.get(mPosition);
+//                    new Thread(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            mRecordDao.delete(record);
+//
+//                            mActivity.runOnUiThread(new Runnable() {
+//                                @Override
+//                                public void run() {
+//                                    Log.e("test", "data:" + record.record);
+//                                }
+//                            });
+//                        }
+//                    }).start();
 
                     break;
             }
+        }
+
+        private void showRecordHistory() {
+            RecordEntity record = mRecordList.get(mPosition);
+            RecordFragment recordFragment = new RecordFragment();
+
+            Bundle bundle = new Bundle();
+            bundle.putInt("recordID" , record.id);
+            recordFragment.setArguments(bundle);
+
+            FragmentManager fm = ((MainActivity) mActivity).getSupportFragmentManager();
+            FragmentTransaction transaction = fm.beginTransaction();
+            transaction.addToBackStack(recordFragment.getClass().getName());
+            transaction.replace(R.id.container, recordFragment);
+
+            transaction.commit();
+
+//            final RecordEntity record = mRecordList.get(mPosition);
+//
+//            new Thread(new Runnable() {
+//                @Override
+//                public void run() {
+//                    mRecordDao.delete(record);
+//
+//                    mActivity.runOnUiThread(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            Log.e("test", "data:" + record.record);
+//                        }
+//                    });
+//                }
+//            }).start();
         }
 
         private void delete() {
