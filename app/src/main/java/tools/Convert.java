@@ -100,6 +100,12 @@ public class Convert {
 
     public static String TimestampFormat(Long timestamp) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+        return TimestampFormat(timestamp, "yyyy/MM/dd HH:mm:ss");
+                //sdf.format(timestamp);
+    }
+
+    public static String TimestampFormat(Long timestamp, String format) {
+        SimpleDateFormat sdf = new SimpleDateFormat(format);
         return sdf.format(timestamp);
     }
 

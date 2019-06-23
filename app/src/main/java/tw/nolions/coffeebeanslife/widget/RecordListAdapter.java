@@ -103,21 +103,6 @@ public class RecordListAdapter extends BaseAdapter {
                     break;
                 case CLICK_VIEW:
                     showRecordHistory();
-//                    final RecordEntity record = mRecordList.get(mPosition);
-//                    new Thread(new Runnable() {
-//                        @Override
-//                        public void run() {
-//                            mRecordDao.delete(record);
-//
-//                            mActivity.runOnUiThread(new Runnable() {
-//                                @Override
-//                                public void run() {
-//                                    Log.e("test", "data:" + record.record);
-//                                }
-//                            });
-//                        }
-//                    }).start();
-
                     break;
             }
         }
@@ -136,22 +121,6 @@ public class RecordListAdapter extends BaseAdapter {
             transaction.replace(R.id.container, recordFragment);
 
             transaction.commit();
-
-//            final RecordEntity record = mRecordList.get(mPosition);
-//
-//            new Thread(new Runnable() {
-//                @Override
-//                public void run() {
-//                    mRecordDao.delete(record);
-//
-//                    mActivity.runOnUiThread(new Runnable() {
-//                        @Override
-//                        public void run() {
-//                            Log.e("test", "data:" + record.record);
-//                        }
-//                    });
-//                }
-//            }).start();
         }
 
         private void delete() {

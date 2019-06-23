@@ -6,6 +6,9 @@ import android.support.v4.app.Fragment;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -28,17 +31,20 @@ import tw.nolions.coffeebeanslife.R;
 import tw.nolions.coffeebeanslife.databinding.FragmentRecordBinding;
 import tw.nolions.coffeebeanslife.model.entity.RecordEntity;
 import tw.nolions.coffeebeanslife.model.recordDao;
+import tw.nolions.coffeebeanslife.service.asyncTask.ExportToCSVAsyncTask;
 import tw.nolions.coffeebeanslife.widget.MPChart;
 //import FragmentRe
 
 
-public class RecordFragment extends Fragment {
+public class RecordFragment extends Fragment implements Toolbar.OnCreateContextMenuListener{
 
     private String[] mNames;
     private View mView;
     private FragmentRecordBinding mBind;
     private int mRecordID;
     private MPChart mChart;
+
+    RecordEntity mRecord;
 
     private recordDao mRecordDao;
 
@@ -105,6 +111,30 @@ public class RecordFragment extends Fragment {
         setData();
     }
 
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        menu.clear();
+        inflater.inflate(R.menu.record_toolbar_menu, menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem menuItem) {
+        switch (menuItem.getItemId()) {
+            case R.id.export_item:
+                Gson gson = new Gson();
+                Type type = new TypeToken<HashMap<Integer, JSONObject>>() {
+                }.getType();
+                HashMap<Integer, JSONObject> mTempRecord = gson.fromJson(mRecord.record, type);
+
+                MainApplication mAPP = (MainApplication) getActivity().getApplication();
+
+                mChart.saveToImage(mRecord.name);
+                new ExportToCSVAsyncTask(getContext(), mAPP, mRecord.name).execute(mTempRecord);
+                break;
+        }
+        return true;
+    }
+
     private void init() {
 
     }
@@ -114,6 +144,7 @@ public class RecordFragment extends Fragment {
         ((MainActivity) getActivity()).setSupportActionBar(toolbar);
         ((MainActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         ((MainActivity) getActivity()).getSupportActionBar().setDisplayShowHomeEnabled(true);
+        setHasOptionsMenu(true);
 
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
@@ -128,12 +159,12 @@ public class RecordFragment extends Fragment {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                final RecordEntity record = mRecordDao.find(mRecordID);
+                mRecord = mRecordDao.find(mRecordID);
 
                 getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        setChart(record);
+                        setChart(mRecord);
                     }
                 });
             }
@@ -179,7 +210,7 @@ public class RecordFragment extends Fragment {
                 mChart.addEntry(
                         Float.parseFloat(jsonObject.getString("b")),
                         Float.parseFloat(jsonObject.getString("s")),
-                        20
+                        key
                 );
             } catch (JSONException e) {
                 Log.e(getTag(), "SONException error: " + e.getMessage());

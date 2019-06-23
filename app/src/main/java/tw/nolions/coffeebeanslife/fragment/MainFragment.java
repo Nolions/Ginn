@@ -348,47 +348,47 @@ public class MainFragment extends Fragment implements
         });
 
         // 切換手/自動模式
-        SwitchCompat modelDrawerSwitch = (SwitchCompat) navigationView.getMenu().findItem(R.id.nav_model_sel).getActionView();
-        modelDrawerSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, final boolean isChecked) {
-                if (Singleton.getInstance().getBLEDevice() != null) {
-                    setLineChart();
-
-                    Thread t = new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            HashMap<String, Object> map = new HashMap<>();
-                            map.put("action", "model");
-                            if (isChecked) {
-                                map.put("auto", true);
-                            } else {
-                                map.put("auto", false);
-                            }
-
-                            bluetoothWrite(new JSONObject(map));
-
-                            mActivity.runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    if (isChecked) {
-                                        setAutoModeTempAlertView();
-                                    }
-                                }
-                            });
-                        }
-                    });
-
-                    t.start();
-                } else if (mBluetoothService.getBondedDevices() == null) {
-                    Log.e(mAPP.TAG(), "MainFragment::modelDrawerSwitch::onCheckedChanged()" + getString(R.string.no_device_connection));
-                    alert(getString(R.string.no_device_connection));
-                } else if (!getActionStart()) {
-                    Log.e(mAPP.TAG(), "MainFragment::modelDrawerSwitch::onCheckedChanged()" + getString(R.string.no_action_start));
-                    alert(getString(R.string.no_action_start));
-                }
-            }
-        });
+//        SwitchCompat modelDrawerSwitch = (SwitchCompat) navigationView.getMenu().findItem(R.id.nav_model_sel).getActionView();
+//        modelDrawerSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+//            @Override
+//            public void onCheckedChanged(CompoundButton buttonView, final boolean isChecked) {
+//                if (Singleton.getInstance().getBLEDevice() != null) {
+//                    setLineChart();
+//
+//                    Thread t = new Thread(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            HashMap<String, Object> map = new HashMap<>();
+//                            map.put("action", "model");
+//                            if (isChecked) {
+//                                map.put("auto", true);
+//                            } else {
+//                                map.put("auto", false);
+//                            }
+//
+//                            bluetoothWrite(new JSONObject(map));
+//
+//                            mActivity.runOnUiThread(new Runnable() {
+//                                @Override
+//                                public void run() {
+//                                    if (isChecked) {
+//                                        setAutoModeTempAlertView();
+//                                    }
+//                                }
+//                            });
+//                        }
+//                    });
+//
+//                    t.start();
+//                } else if (mBluetoothService.getBondedDevices() == null) {
+//                    Log.e(mAPP.TAG(), "MainFragment::modelDrawerSwitch::onCheckedChanged()" + getString(R.string.no_device_connection));
+//                    alert(getString(R.string.no_device_connection));
+//                } else if (!getActionStart()) {
+//                    Log.e(mAPP.TAG(), "MainFragment::modelDrawerSwitch::onCheckedChanged()" + getString(R.string.no_action_start));
+//                    alert(getString(R.string.no_action_start));
+//                }
+//            }
+//        });
     }
 
     @Override
@@ -498,15 +498,6 @@ public class MainFragment extends Fragment implements
                 mDeviceConnectionDialog.show();
                 insertRecord();
                 break;
-//            case R.id.nav_export:
-//                Log.d(mAPP.TAG(), "MainFragment::onNavigationItemSelected(), onClick nav Export item");
-//                Date date = new Date(System.currentTimeMillis());
-//                String filename = new SimpleDateFormat("yyyyMMddhhmmss").format(date);
-//                mChart.saveToImage(filename);
-//
-//               new ExportToCSVAsyncTask(mContext, mAPP, filename).execute(mTempRecord);
-//
-//                break;
             case R.id.nav_stopConnect:
                 if (getActionStart()) {
                     alert(getString(R.string.need_action_stop));
@@ -541,10 +532,9 @@ public class MainFragment extends Fragment implements
             public void run() {
                 Gson gson = new Gson();
                 String json = gson.toJson(mTempRecord);
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHH:mm:ss");
                 Date date = new Date();
                 RecordEntity entity = new RecordEntity();
-                entity.name = Convert.TimestampFormat(date.getTime()) + "_record";
+                entity.name = Convert.TimestampFormat(date.getTime(), "yyyyMMddHHmmss") + "_record";
                 entity.runTime = mRunTime;
                 entity.record = json;
                 entity.create_at = date.getTime();
