@@ -1,6 +1,6 @@
 package tw.nolions.coffeebeanslife.fragment;
 
-
+import android.support.v4.app.FragmentManager;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -23,6 +23,7 @@ import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -42,6 +43,7 @@ import android.widget.CompoundButton;
 import android.widget.ListView;
 
 import com.github.mikephil.charting.charts.LineChart;
+import com.google.gson.Gson;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -62,13 +64,14 @@ import tw.nolions.coffeebeanslife.Singleton;
 import tw.nolions.coffeebeanslife.callback.ViewModelCallback;
 import tw.nolions.coffeebeanslife.databinding.FragmentMainBinding;
 import tw.nolions.coffeebeanslife.model.Temperature;
+import tw.nolions.coffeebeanslife.model.entity.RecordEntity;
 import tw.nolions.coffeebeanslife.service.Service.BluetoothService;
-import tw.nolions.coffeebeanslife.service.asyncTask.ExportToCSVAsyncTask;
 import tw.nolions.coffeebeanslife.viewModel.MainViewModel;
 import tw.nolions.coffeebeanslife.widget.AutoTempAdapter;
 import tw.nolions.coffeebeanslife.widget.BluetoothDeviceAdapter;
 import tw.nolions.coffeebeanslife.widget.MPChart;
 import tw.nolions.coffeebeanslife.widget.SmallProgressDialogUtil;
+import tw.nolions.coffeebeanslife.model.recordDao;
 
 public class MainFragment extends Fragment implements
         Toolbar.OnCreateContextMenuListener,
@@ -97,6 +100,7 @@ public class MainFragment extends Fragment implements
 
     // data
     private int mStartTime = 0;
+    private int mRunTime = 0;
     private HashMap<Integer, JSONObject> mTempRecord;
     private ArrayList<Temperature> mTemperatureList;
     private String mBeanTemp = "0";
@@ -112,6 +116,10 @@ public class MainFragment extends Fragment implements
     private BluetoothService mBluetoothService;
 
     private Boolean mIsBound = false;
+
+    private recordDao mRecordDao;
+
+    private RecordListFragment mRecordListFragment;
 
     private Handler mConnHandler = new MainHandler(this);
 
@@ -129,7 +137,6 @@ public class MainFragment extends Fragment implements
     @Override
     public void onDestroy() {
         super.onDestroy();
-        super.onDetach();
         if (mIsBound) {
             mActivity.unbindService(mConnection);
             mIsBound = false;
@@ -181,12 +188,20 @@ public class MainFragment extends Fragment implements
         mTempRecord = new HashMap<>();
         mTemperatureList = new ArrayList<>();
 
+        mRecordListFragment = new RecordListFragment();
+
         // 檢查裝置是否支援藍牙
         bluetoothSupport();
         // 請求權限
         grantedPermission();
         // 啟動Service
         onStartService();
+
+        initDatabase();
+    }
+
+    private void initDatabase() {
+        mRecordDao = mAPP.appDatabase().getRecordDao();
     }
 
     private void grantedPermission() {
@@ -469,21 +484,38 @@ public class MainFragment extends Fragment implements
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         Log.d(mAPP.TAG(), "MainFragment::onNavigationItemSelected(), onClick Navigation menu item...");
         switch (item.getItemId()) {
-//            case R.id.nav_record:
-//                Log.d(mAPP.TAG(), "MainFragment::onNavigationItemSelected(), onClick nav Record item");
-//                break;
-//            case R.id.nav_save:
-//                Log.d(mAPP.TAG(), "MainFragment::onNavigationItemSelected(), onClick nav Save item");
-//                break;
-            case R.id.nav_export:
-                Log.d(mAPP.TAG(), "MainFragment::onNavigationItemSelected(), onClick nav Export item");
-                Date date = new Date(System.currentTimeMillis());
-                String filename = new SimpleDateFormat("yyyyMMddhhmmss").format(date);
-                mChart.saveToImage(filename);
+            case R.id.nav_record:
+                Log.d(mAPP.TAG(), "MainFragment::onNavigationItemSelected(), onClick nav Record item");
 
-                new ExportToCSVAsyncTask(mContext, mAPP, filename).execute(mTempRecord);
+                FragmentManager fm = ((MainActivity) this.getActivity()).getSupportFragmentManager();
+                FragmentTransaction transaction = fm.beginTransaction();
+                transaction.addToBackStack(mRecordListFragment.getClass().getName());
+                transaction.hide(this);
+//                if (!mRecordListFragment.isAdded()) {
+//                    transaction.add(R.id.container, mRecordListFragment);
+                    transaction.replace(R.id.container, mRecordListFragment);
+//                } else {
+//                    transaction.show(mRecordListFragment);
+//                    transaction.show(mRecordListFragment);
+//                }
+
+                transaction.commit();
 
                 break;
+            case R.id.nav_save:
+                Log.d(mAPP.TAG(), "MainFragment::onNavigationItemSelected(), onClick nav Save item");
+
+                insertRecord();
+                break;
+//            case R.id.nav_export:
+//                Log.d(mAPP.TAG(), "MainFragment::onNavigationItemSelected(), onClick nav Export item");
+//                Date date = new Date(System.currentTimeMillis());
+//                String filename = new SimpleDateFormat("yyyyMMddhhmmss").format(date);
+//                mChart.saveToImage(filename);
+//
+//               new ExportToCSVAsyncTask(mContext, mAPP, filename).execute(mTempRecord);
+//
+//                break;
             case R.id.nav_stopConnect:
                 if (getActionStart()) {
                     alert(getString(R.string.need_action_stop));
@@ -511,6 +543,29 @@ public class MainFragment extends Fragment implements
 
         mDrawerLayout.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    private void insertRecord() {
+
+
+//
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Gson gson = new Gson();
+                String json = gson.toJson(mTempRecord);
+                Log.e("test", "json:" + json);
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHH:mm:ss");
+                Date date = new Date();
+                RecordEntity entiy = new RecordEntity();
+                entiy.name = Convert.TimestampFormat(date.getTime()) + "_record";
+                entiy.runTime = mRunTime;
+                entiy.record = "";
+                entiy.create_at = date.getTime();
+
+                mRecordDao.insert(entiy);
+            }
+        }).start();
     }
 
     @Override
@@ -556,7 +611,7 @@ public class MainFragment extends Fragment implements
 
     @Override
     public void actionBean(final boolean action) {
-        if (mBluetoothService.getState() == 2 && this.getActionStart()) {
+        if (mBluetoothService.getState() == 2 && getActionStart()) {
             Log.d(mAPP.TAG(), "MainFragment::actionBean(), action: " + action);
             mMainViewModel.setIsImport(action);
 
@@ -635,26 +690,26 @@ public class MainFragment extends Fragment implements
             mBeanTemp = String.valueOf(map.get("b"));
             mStoveTemp = String.valueOf(map.get("s"));
 
-            int sec = 1;
+//            int sec = 1;
             if (System.currentTimeMillis() / 1000 - mStartTime != 0) {
-                sec = (int) System.currentTimeMillis() / 1000 - mStartTime;
+                mRunTime = (int) System.currentTimeMillis() / 1000 - mStartTime;
             }
 
             if (this.getActionStart()) {
-                mTempRecord.put(sec, jsonObject);
+                mTempRecord.put(mRunTime, jsonObject);
                 String mNowTemp = mStoveTemp;
                 if (mModel.equals("a")) {
                     mNowTemp = mBeanTemp;
                 }
 
                 Log.d(mAPP.TAG(), "sec:" + data + ", bean: " + mBeanTemp + ", stove:" + mStoveTemp);
-                Temperature model = new Temperature(Float.parseFloat(mNowTemp), sec);
+                Temperature model = new Temperature(Float.parseFloat(mNowTemp), mRunTime);
                 mChart.addEntry(
                         Float.parseFloat(mBeanTemp),
                         Float.parseFloat(mStoveTemp),
-                        sec
+                        mRunTime
                 );
-                mMainViewModel.setRunTime(sec);
+                mMainViewModel.setRunTime(mRunTime);
 
                 mTemperatureList.add(model);
             }
@@ -706,7 +761,7 @@ public class MainFragment extends Fragment implements
     }
 
     /**
-     * Bluetooth device of Listview's item ClickListener
+     * Bluetooth device of ListView's item ClickListener
      */
     private ListView.OnItemClickListener listener = new ListView.OnItemClickListener() {
         @Override

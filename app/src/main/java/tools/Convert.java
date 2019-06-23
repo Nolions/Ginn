@@ -5,6 +5,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -95,6 +96,11 @@ public class Convert {
         } else {
             return hour + "h" + min + "m" + sec + "s";
         }
+    }
+
+    public static String TimestampFormat(Long timestamp) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+        return sdf.format(timestamp);
     }
 
     public static HashMap<String, Integer> SecondToTimeMap(int seconds) {

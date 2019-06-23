@@ -1,6 +1,7 @@
 package tw.nolions.coffeebeanslife;
 
 import android.app.Application;
+import android.arch.persistence.room.Room;
 import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -12,6 +13,7 @@ public class MainApplication extends Application {
     private Context mContext;
     private static MainApplication mAPP;
     private PackageInfo mPackageInfo;
+    private AppDatabase mAppDatabase;
 
     @Override
     public void onCreate() {
@@ -67,5 +69,13 @@ public class MainApplication extends Application {
 
     public int PermissionsRequestAccessLocationCode() {
         return 1;
+    }
+
+    public AppDatabase appDatabase() {
+        if (mAppDatabase == null) {
+            mAppDatabase = Room.databaseBuilder(mContext, AppDatabase.class, "CoffeeBeanLife").build();
+        }
+
+        return mAppDatabase;
     }
 }

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data>
+        <import type="android.widget.ListView" />
+
+        <variable
+            name="adapter"
+            type="tw.nolions.coffeebeanslife.widget.RecordListAdapter" />
+    </data>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/recordList_toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/colorPrimary"
+            android:minHeight="?attr/actionBarSize"
+            app:title="@string/record_list"
+            app:theme="@style/AppTheme.Toolbar"
+            app:popupTheme="@style/AppTheme.Toolbar.popup"
+            app:titleTextAppearance="@style/AppTheme.Toolbar.Title"/>
+
+        <ListView
+            android:id="@+id/recordList_ListView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            app:adapter="@{adapter}" />
+        </ListView>
+
+    </LinearLayout>
+</layout>

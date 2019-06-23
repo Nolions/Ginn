@@ -54,6 +54,7 @@
     <string name="navigation_menu_share">分享APP</string>
     <string name="navigation_menu_send">回報問題</string>
 
+    <string name="record_list">歷史紀錄</string>
     <string name="tempUnit">°C</string>
     <string name="temp_beans">豆溫</string>
     <string name="temp_stove">爐溫</string>
@@ -66,6 +67,8 @@
     <string name="exit_beans">出豆</string>
     <string name="first_crack">一爆</string>
     <string name="second_crack">二爆</string>
+    
+    <string name="delete">刪除</string>
 
     <string name="loading">載入中</string>
     <string name="ble_device_connecting">裝置連線中...</string>
