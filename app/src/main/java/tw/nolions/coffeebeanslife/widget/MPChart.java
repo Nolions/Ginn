@@ -34,7 +34,6 @@ public class MPChart implements OnChartValueSelectedListener {
     private LineChart mLineChart;
     private String[] mDataSetNames;
     private String mDescribe;
-//    private int mNum = 0;
 
     private ArrayList<Integer> mXAixData = new ArrayList<>();
 
@@ -156,7 +155,6 @@ public class MPChart implements OnChartValueSelectedListener {
 //        set.setAxisDependency(YAxis.AxisDependency.LEFT);
 //        set.setValueTextSize(10f);
 
-
         set.setColor(color);
         set.setCircleColor(color);
         set.setHighLightColor(color);
@@ -174,7 +172,6 @@ public class MPChart implements OnChartValueSelectedListener {
     }
 
     public void refresh() {
-//        mNum = 0;
         mLineChart.fitScreen();
         mLineChart.notifyDataSetChanged();
 
@@ -196,7 +193,6 @@ public class MPChart implements OnChartValueSelectedListener {
      * @param sec
      */
     public void addEntry(int lineIndex, float value, int sec) {
-//        mNum++;
         LineData lineData = this.mLineChart.getLineData();
 
         if (lineData == null) {
@@ -224,8 +220,6 @@ public class MPChart implements OnChartValueSelectedListener {
         setLineDataSet(lineData, 0, value1, mColors[0], sec);
         setLineDataSet(lineData, 1, value2, mColors[1], sec);
 
-
-
         mXAixData.add(sec);
         lineData.notifyDataChanged();
         setChange();
@@ -233,14 +227,12 @@ public class MPChart implements OnChartValueSelectedListener {
         mLineChart.moveViewTo(lineData.getEntryCount(), 50f, YAxis.AxisDependency.LEFT);
     }
 
-    private void setLineDataSet(LineData lineData, int index, float value, int color, int sec ) {
+    private void setLineDataSet(LineData lineData, int index, float value, int color, int sec) {
         ILineDataSet set = lineData.getDataSetByIndex(index);
         if (set == null) {
             ArrayList<Entry> entries = new ArrayList<>();
             entries.add(new Entry(0, value));
-
 //            mXAixData.add(0);
-
             String name = (String) Array.get(mDataSetNames, index);
             set = initLineDataSet(name, entries, color);
             lineData.addDataSet(set);
@@ -257,7 +249,6 @@ public class MPChart implements OnChartValueSelectedListener {
         ll.setTextColor(Color.GRAY);
         ll.setTextSize(12f);
 
-        // .. and more styling options
         xAxis.addLimitLine(ll);
         xAxis.setDrawLimitLinesBehindData(true);
     }
