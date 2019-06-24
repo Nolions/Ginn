@@ -33,12 +33,9 @@ import tw.nolions.coffeebeanslife.model.entity.RecordEntity;
 import tw.nolions.coffeebeanslife.model.recordDao;
 import tw.nolions.coffeebeanslife.service.asyncTask.ExportToCSVAsyncTask;
 import tw.nolions.coffeebeanslife.widget.MPChart;
-//import FragmentRe
 
-
-public class RecordFragment extends Fragment implements Toolbar.OnCreateContextMenuListener{
-
-    private String[] mNames;
+public class RecordFragment extends Fragment implements Toolbar.OnCreateContextMenuListener {
+//    private String[] mNames;
     private View mView;
     private FragmentRecordBinding mBind;
     private int mRecordID;
@@ -65,10 +62,10 @@ public class RecordFragment extends Fragment implements Toolbar.OnCreateContextM
         Bundle arguments = getArguments();
         mRecordID = arguments.getInt("recordID");
 
-        mNames = new String[]{
-                getString(R.string.temp_stove),
-                getString(R.string.temp_beans)
-        };
+//        mNames = new String[]{
+//                getString(R.string.temp_stove),
+//                getString(R.string.temp_beans)
+//        };
     }
 
     @Override
@@ -173,47 +170,43 @@ public class RecordFragment extends Fragment implements Toolbar.OnCreateContextM
 
     private void initMPChart() {
         String[] names = new String[]{
-                getString(R.string.temp_stove),
-                getString(R.string.temp_beans)
+                getString(R.string.temp_beans),
+                getString(R.string.temp_stove)
         };
 
         LineChart lineChart = mView.findViewById(R.id.record_lineChart);
         mChart = new MPChart(lineChart, "", names);
         mChart.init();
-
-
     }
 
     private void setChart(RecordEntity record) {
         Gson gson = new Gson();
-
         Type type = new TypeToken<HashMap<Integer, JSONObject>>() {
+
         }.getType();
         HashMap<Integer, JSONObject> mTempRecord = gson.fromJson(record.record, type);
 
         Map<Integer, JSONObject> param = new TreeMap<>(mTempRecord);
         int i = 0;
         for (Integer key : param.keySet()) {
-
             JSONObject jsonObject = param.get(key);
-
-            if (i == record.inBeanIndex) {
-                mChart.addXAxisLimitLine(getString(R.string.enter_beans));
-            } else if (i == record.firstCrackIndex) {
-                mChart.addXAxisLimitLine(getString(R.string.first_crack));
-            } else if (i == record.secondCrackIndex) {
-                mChart.addXAxisLimitLine(getString(R.string.second_crack));
-            }
-
             try {
-
                 mChart.addEntry(
                         Float.parseFloat(jsonObject.getString("b")),
                         Float.parseFloat(jsonObject.getString("s")),
                         key
                 );
             } catch (JSONException e) {
-                Log.e(getTag(), "SONException error: " + e.getMessage());
+                Log.e(getTag(), "RecordFragment::setChart(), JSONException error: " + e.getMessage());
+            }
+
+            if (i == record.inBeanIndex && i != 0) {
+                mChart.addXAxisLimitLine(getString(R.string.enter_beans));
+            } else if (i == record.firstCrackIndex && i != 0) {
+                mChart.addXAxisLimitLine(getString(R.string.first_crack));
+            } else if (i == record.secondCrackIndex && i != 0) {
+                Log.e("test", "" + record.secondCrackIndex);
+                mChart.addXAxisLimitLine(getString(R.string.second_crack));
             }
             i++;
         }

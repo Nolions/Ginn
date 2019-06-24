@@ -9,11 +9,14 @@ import android.util.Log;
 
 import java.util.UUID;
 
+import tw.nolions.coffeebeanslife.model.recordDao;
+
 public class MainApplication extends Application {
     private Context mContext;
     private static MainApplication mAPP;
     private PackageInfo mPackageInfo;
     private AppDatabase mAppDatabase;
+    private recordDao mRecordDao;
 
     @Override
     public void onCreate() {
@@ -77,5 +80,13 @@ public class MainApplication extends Application {
         }
 
         return mAppDatabase;
+    }
+
+    public recordDao recordDao() {
+        if (mRecordDao == null) {
+            mRecordDao = appDatabase().getRecordDao();
+        }
+
+        return mRecordDao;
     }
 }

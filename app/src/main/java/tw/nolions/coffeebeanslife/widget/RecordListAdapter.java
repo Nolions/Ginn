@@ -13,6 +13,8 @@ import android.widget.BaseAdapter;
 
 import com.android.databinding.library.baseAdapters.BR;
 
+import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import tw.nolions.coffeebeanslife.MainActivity;
@@ -35,15 +37,8 @@ public class RecordListAdapter extends BaseAdapter {
 
     public RecordListAdapter(Activity activity) {
         mActivity = activity;
-        MainApplication app = (MainApplication) mActivity.getApplication();
-        mRecordDao = app.appDatabase().getRecordDao();
-
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                mRecordList = mRecordDao.getAll();
-            }
-        }).start();
+        mRecordDao = ((MainApplication) mActivity.getApplication()).recordDao();
+        mRecordList = new ArrayList<>();
     }
 
     @Override
@@ -141,6 +136,10 @@ public class RecordListAdapter extends BaseAdapter {
                 }
             }).start();
         }
+    }
+
+    public void setData(List<RecordEntity> list) {
+        mRecordList = list;
     }
 }
 

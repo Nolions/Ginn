@@ -49,7 +49,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.lang.ref.WeakReference;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -206,7 +205,8 @@ public class MainFragment extends Fragment implements
     }
 
     private void initDatabase() {
-        mRecordDao = mAPP.appDatabase().getRecordDao();
+        mRecordDao = ((MainApplication) mActivity.getApplication()).recordDao();
+//                mAPP.appDatabase().getRecordDao();
     }
 
     private void grantedPermission() {
@@ -422,8 +422,8 @@ public class MainFragment extends Fragment implements
 //        }
 
         String[] names = new String[]{
-                mActivity.getString(R.string.temp_stove),
-                mActivity.getString(R.string.temp_beans)
+                mActivity.getString(R.string.temp_beans),
+                mActivity.getString(R.string.temp_stove)
         };
 
         mChart = new MPChart(mLineChart, "", names);

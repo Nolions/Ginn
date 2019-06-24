@@ -8,10 +8,15 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import androidx.annotation.Nullable;
 import tw.nolions.coffeebeanslife.MainActivity;
+import tw.nolions.coffeebeanslife.MainApplication;
 import tw.nolions.coffeebeanslife.R;
 import tw.nolions.coffeebeanslife.databinding.FragmentRecordListBinding;
+import tw.nolions.coffeebeanslife.model.entity.RecordEntity;
 import tw.nolions.coffeebeanslife.widget.RecordListAdapter;
 
 public class RecordListFragment extends Fragment {
@@ -20,6 +25,8 @@ public class RecordListFragment extends Fragment {
     private RecordListAdapter mListViewAdapter;
 
     private FragmentRecordListBinding mBinding;
+
+    private List<RecordEntity> mRecordList;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -66,9 +73,8 @@ public class RecordListFragment extends Fragment {
         super.onActivityCreated(savedInstanceState);
     }
 
-
-
     private void init() {
+        mRecordList = new ArrayList<>();
         mListViewAdapter = new RecordListAdapter(getActivity());
     }
 
@@ -86,5 +92,23 @@ public class RecordListFragment extends Fragment {
                 getFragmentManager().popBackStack();
             }
         });
+
+        loadRecords();
+    }
+
+    private void loadRecords() {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                mRecordList = ((MainApplication) getActivity().getApplication()).recordDao().getAll();
+                getActivity().runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        mListViewAdapter.setData(mRecordList);
+                        mListViewAdapter.notifyDataSetChanged();
+                    }
+                });
+            }
+        }).start();
     }
 }
