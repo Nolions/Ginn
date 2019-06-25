@@ -1,6 +1,7 @@
 package tw.nolions.coffeebeanslife.widget;
 
 import android.graphics.Color;
+import android.util.Log;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.AxisBase;
@@ -172,13 +173,15 @@ public class MPChart implements OnChartValueSelectedListener {
     }
 
     public void refresh() {
-        mLineChart.fitScreen();
-        mLineChart.notifyDataSetChanged();
+        Log.e("test", "trtest");
+
 
         xAxis.removeAllLimitLines();
         mXAixData = new ArrayList<>();
         mLineChart.clear();
         mLineChart.invalidate();
+        mLineChart.fitScreen();
+        mLineChart.notifyDataSetChanged();
     }
 
     public void setChange() {

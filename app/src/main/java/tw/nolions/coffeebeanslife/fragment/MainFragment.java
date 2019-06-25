@@ -50,7 +50,6 @@ import org.json.JSONObject;
 
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 
@@ -100,8 +99,11 @@ public class MainFragment extends Fragment implements
     // data
     private int mStartTime = 0;
     private int mRunTime = 0;
+    private int mFirstCrackStartTime = 0;
+    private int mFirstCrackTime = 0;
+    private int mSecondCrackStartTime = 0;
+    private int mSecondCrackTime = 0;
     private HashMap<Integer, JSONObject> mTempRecord;
-    private ArrayList<Temperature> mTemperatureList;
     private String mBeanTemp = "0";
     private String mStoveTemp = "0";
     private Boolean mActionStart = false;
@@ -125,6 +127,7 @@ public class MainFragment extends Fragment implements
     private int mFirstCrack = 0;
     private int mSecondCrack = 0;
     private int mInBean = 0;
+    private boolean mIsInBean = false;
 
 
     @NonNull
@@ -190,7 +193,6 @@ public class MainFragment extends Fragment implements
         mDeviceListAdapter = new BluetoothDeviceAdapter(this.mContext);
         mAutoTempAdapter = new AutoTempAdapter(this.mContext, mAPP);
         mTempRecord = new HashMap<>();
-        mTemperatureList = new ArrayList<>();
 
         mRecordListFragment = new RecordListFragment();
 
@@ -206,7 +208,6 @@ public class MainFragment extends Fragment implements
 
     private void initDatabase() {
         mRecordDao = ((MainApplication) mActivity.getApplication()).recordDao();
-//                mAPP.appDatabase().getRecordDao();
     }
 
     private void grantedPermission() {
@@ -312,20 +313,20 @@ public class MainFragment extends Fragment implements
                                 map.put("start", false);
                             }
 
-
                             bluetoothWrite(new JSONObject(map));
 
                             mActivity.runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
+                                    mStartTime = (int) System.currentTimeMillis() / 1000;
+                                    Log.e("test", "run time00:" + mStartTime);
                                     // 控制接收溫度是否顯示在線圖上
                                     if (isChecked) {
-                                        mStartTime = (int) System.currentTimeMillis() / 1000;
                                         setActionStart(true);
                                     } else {
                                         mMainViewModel.setIsFirstCrack(false);
                                         mMainViewModel.setIsSecondCrack(false);
-                                        setActionStart(false);
+//                                        setActionStart(false);
                                         mFirstCrack = 0;
                                         mSecondCrack = 0;
                                         mInBean = 0;
@@ -549,7 +550,7 @@ public class MainFragment extends Fragment implements
                         try {
                             Thread.sleep(2000);
                         } catch (InterruptedException e) {
-                            Log.e(getTag(),"InternalError error : " + e.getMessage());
+                            Log.e(getTag(), "InternalError error : " + e.getMessage());
                         }
 
                         mDeviceConnectionDialog.dismiss();
@@ -578,8 +579,8 @@ public class MainFragment extends Fragment implements
     public void firstCrack() {
         mMainViewModel.setIsFirstCrack(true);
         if (System.currentTimeMillis() / 1000 - mStartTime != 0) {
-            int sec = (int) System.currentTimeMillis() / 1000 - mStartTime;
-            mMainViewModel.setFirstCrackTime(sec);
+            mFirstCrackStartTime = (int) System.currentTimeMillis() / 1000;
+            Log.e("test", "mFirstCrackStartTime:" + mFirstCrackStartTime);
             mFirstCrack = mTempRecord.size();
         }
         mChart.addXAxisLimitLine(getString(R.string.first_crack));
@@ -589,10 +590,9 @@ public class MainFragment extends Fragment implements
     public void secondCrack() {
         mMainViewModel.setIsSecondCrack(true);
         if (System.currentTimeMillis() / 1000 - mStartTime != 0) {
-            int sec = (int) System.currentTimeMillis() / 1000 - mStartTime;
-            mMainViewModel.setSecondCrackTime(sec);
-            mChart.addEntry(Float.parseFloat(mBeanTemp), Float.parseFloat(mStoveTemp), sec);
-
+            mSecondCrackStartTime = (int) System.currentTimeMillis() / 1000;
+//            mMainViewModel.setSecondCrackTime(sec);
+//            mChart.addEntry(Float.parseFloat(mBeanTemp), Float.parseFloat(mStoveTemp), sec);
             mSecondCrack = mTempRecord.size();
         }
         mChart.addXAxisLimitLine(getString(R.string.second_crack));
@@ -605,6 +605,8 @@ public class MainFragment extends Fragment implements
         if (mBluetoothService.getState() == 2 && getActionStart()) {
             mMainViewModel.setIsImport(action);
 
+            mIsInBean = action;
+            mStartTime = (int) System.currentTimeMillis() / 1000;
             Thread t = new Thread(new Runnable() {
                 @Override
                 public void run() {
@@ -617,32 +619,15 @@ public class MainFragment extends Fragment implements
                     mActivity.runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
+                            Log.e("test", "test");
                             String msg = getString(R.string.exit_beans);
                             if (action) {
                                 mChart.refresh();
                                 mMainViewModel.setIsFirstCrack(false);
                                 mMainViewModel.setIsSecondCrack(false);
 
-                                int index = 0;
-                                ArrayList<Temperature> tempTemperatureList = new ArrayList<>();
-                                for (int i = mTemperatureList.size(); i >= 1; i--) {
-                                    if (index >= 5) {
-                                        break;
-                                    }
-                                    tempTemperatureList.add(mTemperatureList.get(i - 1));
-                                    index++;
-                                }
-
-                                Collections.reverse(tempTemperatureList);
-                                for (Temperature model : tempTemperatureList) {
-                                    mChart.addEntry(
-                                            Float.parseFloat(mBeanTemp),
-                                            Float.parseFloat(mStoveTemp),
-                                            model.getSeconds()
-                                    );
-                                }
-
                                 msg = getString(R.string.enter_beans);
+                                mChart.addEntry(Float.parseFloat(mBeanTemp), Float.parseFloat(mStoveTemp), 0);
                                 mInBean = mTempRecord.size();
                                 mChart.addXAxisLimitLine(getString(R.string.enter_beans));
 
@@ -682,13 +667,22 @@ public class MainFragment extends Fragment implements
             mBeanTemp = String.valueOf(map.get("b"));
             mStoveTemp = String.valueOf(map.get("s"));
 
-//            int sec = 1;
-            if (System.currentTimeMillis() / 1000 - mStartTime != 0) {
+            if ((System.currentTimeMillis() / 1000 - mStartTime) != 0) {
                 mRunTime = (int) System.currentTimeMillis() / 1000 - mStartTime;
             }
 
+//aaasss
+            if ((System.currentTimeMillis() / 1000 - mSecondCrackStartTime) > 0) {
+                mSecondCrackTime = (int) System.currentTimeMillis() / 1000 - mSecondCrackStartTime;
+            }
+
+            if ((System.currentTimeMillis() / 1000) - mFirstCrackStartTime > 0) {
+                mFirstCrackTime = (int) System.currentTimeMillis() / 1000 - mFirstCrackStartTime;
+            }
+
+
             if (this.getActionStart()) {
-                mTempRecord.put(mRunTime, jsonObject);
+
                 String mNowTemp = mStoveTemp;
                 if (mModel.equals("a")) {
                     mNowTemp = mBeanTemp;
@@ -700,9 +694,13 @@ public class MainFragment extends Fragment implements
                         Float.parseFloat(mStoveTemp),
                         mRunTime
                 );
-                mMainViewModel.setRunTime(mRunTime);
 
-                mTemperatureList.add(model);
+                if (mIsInBean) {
+                    mTempRecord.put(mRunTime, jsonObject);
+                    mMainViewModel.setRunTime(mRunTime);
+                    mMainViewModel.setFirstCrackTime(mFirstCrackTime);
+                    mMainViewModel.setSecondCrackTime(mSecondCrackTime);
+                }
             }
         } catch (JSONException e) {
             Log.e(mAPP.TAG(), "MainFragment::updateTemp(), error :  " + e.getMessage());

@@ -104,7 +104,6 @@ public class MainViewModel extends ViewModel {
         if (seconds >= 0) {
             time = Convert.SecondConversion(seconds);
         }
-        this.mRunTime.set(time);
         this.mFirstCrackTime.set(time);
     }
 
@@ -113,7 +112,6 @@ public class MainViewModel extends ViewModel {
         if (seconds >= 0) {
             time = Convert.SecondConversion(seconds);
         }
-        this.mRunTime.set(time);
         this.mSecondCrackTime.set(time);
     }
 
