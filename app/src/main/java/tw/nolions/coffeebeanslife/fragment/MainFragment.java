@@ -27,7 +27,6 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.widget.SwitchCompat;
 import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -39,7 +38,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.AdapterView;
-import android.widget.CompoundButton;
 import android.widget.ListView;
 
 import com.github.mikephil.charting.charts.LineChart;
@@ -292,61 +290,7 @@ public class MainFragment extends Fragment implements
         Menu submenu = menu.addSubMenu(getString(R.string.appInfo));
 
         submenu.add(getString(R.string.versionNameLabel) + mAPP.VersionName()).setCheckable(false);
-
         navigationView.invalidate();
-
-        // 啟動/關閉
-        SwitchCompat statusDrawerSwitch = (SwitchCompat) navigationView.getMenu().findItem(R.id.nav_OnOff).getActionView();
-        statusDrawerSwitch.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton buttonView, final boolean isChecked) {
-//                if (Singleton.getInstance().getBLEDevice() != null) {
-                if (mBluetoothService.getState() == 2) {
-                    Thread t = new Thread(new Runnable() {
-                        @Override
-                        public void run() {
-                            HashMap<String, Object> map = new HashMap<>();
-                            map.put("action", "status");
-                            if (isChecked) {
-                                map.put("start", true);
-                            } else {
-                                map.put("start", false);
-                            }
-
-                            bluetoothWrite(new JSONObject(map));
-
-                            mActivity.runOnUiThread(new Runnable() {
-                                @Override
-                                public void run() {
-                                    mStartTime = (int) System.currentTimeMillis() / 1000;
-                                    Log.e("test", "run time00:" + mStartTime);
-                                    // 控制接收溫度是否顯示在線圖上
-                                    if (isChecked) {
-                                        setActionStart(true);
-                                    } else {
-                                        mMainViewModel.setIsFirstCrack(false);
-                                        mMainViewModel.setIsSecondCrack(false);
-//                                        setActionStart(false);
-                                        mFirstCrack = 0;
-                                        mSecondCrack = 0;
-                                        mInBean = 0;
-                                        mChart.refresh();
-                                        mMainViewModel.refresh();
-                                    }
-                                }
-                            });
-                        }
-                    });
-
-                    t.start();
-
-                } else if (mBluetoothService.getBluetoothDevice() == null) {
-                    alert(getString(R.string.no_device_connection));
-                } else if (!getActionStart()) {
-                    alert(getString(R.string.no_action_start));
-                }
-            }
-        });
 
         // 切換手/自動模式
 //        SwitchCompat modelDrawerSwitch = (SwitchCompat) navigationView.getMenu().findItem(R.id.nav_model_sel).getActionView();
@@ -415,13 +359,6 @@ public class MainFragment extends Fragment implements
     }
 
     private void setLineChart() {
-//        String str = mActivity.getString(R.string.temp_stove);
-//        if (mModel.equals("m")) {
-//            str = mActivity.getString(R.string.temp_stove);
-//        } else if (mModel.equals("a")) {
-//            str = mActivity.getString(R.string.temp_beans);
-//        }
-
         String[] names = new String[]{
                 mActivity.getString(R.string.temp_beans),
                 mActivity.getString(R.string.temp_stove)
@@ -442,15 +379,12 @@ public class MainFragment extends Fragment implements
         switch (menuItem.getItemId()) {
             case R.id.action_conn:
                 if (!mBluetoothService.isSupport()) {
-                    Log.e(mAPP.TAG(), "MainFragment::actionBean(), " + getString(R.string.no_support_bluetooth));
                     alert(getString(R.string.no_support_bluetooth));
                     return false;
                 } else if (!mBluetoothService.isEnable()) {
-                    Log.e(mAPP.TAG(), "MainFragment::actionBean(), " + getString(R.string.no_enable_bluetooth));
                     alert(getString(R.string.no_enable_bluetooth));
                     return false;
                 }
-
                 getPairedDevices();
                 View view = getLayoutInflater().inflate(R.layout.fragment_device_list, null);
                 ListView mDeviceListView = (ListView) view.findViewById(R.id.device_ListView);
@@ -487,6 +421,33 @@ public class MainFragment extends Fragment implements
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         switch (item.getItemId()) {
+            case R.id.nav_On:
+                if (mBluetoothService.getState() == 2) {
+                    Thread t = new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            HashMap<String, Object> map = new HashMap<>();
+                            map.put("action", "status");
+                            map.put("start", true);
+                            bluetoothWrite(new JSONObject(map));
+
+                            mActivity.runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    mStartTime = (int) System.currentTimeMillis() / 1000;
+                                    setActionStart(true);
+                                }
+                            });
+                        }
+                    });
+
+                    t.start();
+                } else if (mBluetoothService.getBluetoothDevice() == null) {
+                    alert(getString(R.string.no_device_connection));
+                } else if (!getActionStart()) {
+                    alert(getString(R.string.no_action_start));
+                }
+                break;
             case R.id.nav_record:
                 FragmentManager fm = ((MainActivity) this.getActivity()).getSupportFragmentManager();
                 FragmentTransaction transaction = fm.beginTransaction();
@@ -494,10 +455,7 @@ public class MainFragment extends Fragment implements
                 transaction.replace(R.id.container, mRecordListFragment);
                 transaction.commit();
                 break;
-            case R.id.nav_save:
-                mDeviceConnectionDialog.setText(getString(R.string.saving));
-                mDeviceConnectionDialog.show();
-                insertRecord();
+            case R.id.nav_Clear:
                 break;
             case R.id.nav_stopConnect:
                 if (getActionStart()) {
@@ -508,17 +466,15 @@ public class MainFragment extends Fragment implements
                     stopBluetoothConnect();
                     alert(getString(R.string.ble_device_stop_connecting));
                 }
-
+                break;
+            case R.id.nav_save:
+                mDeviceConnectionDialog.setText(getString(R.string.saving));
+                mDeviceConnectionDialog.show();
+                insertRecord();
                 break;
             case R.id.nav_exit:
                 exitAPP();
                 break;
-//            case R.id.nav_share:
-//                Log.d(mAPP.TAG(), "MainFragment::onNavigationItemSelected(), onClick nav Share item");
-//                break;
-//            case R.id.nav_send:
-//                Log.d(mAPP.TAG(), "MainFragment::onNavigationItemSelected(), onClick nav Send item");
-//                break;
             default:
                 return false;
         }
@@ -607,14 +563,23 @@ public class MainFragment extends Fragment implements
 
             mIsInBean = action;
             mStartTime = (int) System.currentTimeMillis() / 1000;
+
+            if (action) {
+                inBeansAction();
+            } else {
+                outBeansAction();
+            }
+
             Thread t = new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    HashMap<String, Object> map = new HashMap<>();
-                    map.put("action", "inBean");
-                    map.put("in", action);
-
-                    bluetoothWrite(new JSONObject(map));
+                    if (!action) {
+                        Log.e("test", "test test");
+                        HashMap<String, Object> map = new HashMap<>();
+                        map.put("action", "status");
+                        map.put("start", false);
+                        bluetoothWrite(new JSONObject(map));
+                    }
 
                     mActivity.runOnUiThread(new Runnable() {
                         @Override
@@ -632,7 +597,18 @@ public class MainFragment extends Fragment implements
                                 mChart.addXAxisLimitLine(getString(R.string.enter_beans));
 
                             } else {
+                                HashMap<String, Object> map = new HashMap<>();
+
+
                                 setActionStart(false);
+                                mMainViewModel.setIsFirstCrack(false);
+                                mMainViewModel.setIsSecondCrack(false);
+//                                        setActionStart(false);
+                                mFirstCrack = 0;
+                                mSecondCrack = 0;
+                                mInBean = 0;
+                                mChart.refresh();
+                                mMainViewModel.refresh();
                             }
                             alert(msg);
                         }
@@ -648,6 +624,14 @@ public class MainFragment extends Fragment implements
             Log.e(mAPP.TAG(), "MainFragment::actionBean(), " + getString(R.string.no_action_start));
             alert(getString(R.string.no_action_start));
         }
+    }
+
+    public void inBeansAction() {
+
+    }
+
+    public void outBeansAction() {
+
     }
 
     public void setActionStart(boolean status) {
@@ -671,7 +655,6 @@ public class MainFragment extends Fragment implements
                 mRunTime = (int) System.currentTimeMillis() / 1000 - mStartTime;
             }
 
-//aaasss
             if ((System.currentTimeMillis() / 1000 - mSecondCrackStartTime) > 0) {
                 mSecondCrackTime = (int) System.currentTimeMillis() / 1000 - mSecondCrackStartTime;
             }

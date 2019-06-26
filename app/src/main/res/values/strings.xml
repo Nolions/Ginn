@@ -45,11 +45,13 @@
     <string name="navigation_menu_label_Other">其他</string>
 
     <string name="navigation_menu_OnOff">啟動/關閉</string>
+    <string name="navigation_menu_On">啟動</string>
     <string name="navigation_menu_model_build">手/自動模式</string>
     <string name="navigation_menu_record">查看紀錄</string>
     <string name="navigation_menu_save">儲存</string>
     <string name="navigation_menu_export">匯出</string>
     <string name="navigation_menu_stopConnect">停止連線</string>
+    <string name="navigation_menu_clear">清除資料</string>
     <string name="navigation_menu_exit">離開APP</string>
     <string name="navigation_menu_share">分享APP</string>
     <string name="navigation_menu_send">回報問題</string>
