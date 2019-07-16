@@ -24,7 +24,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
-import androidx.annotation.Nullable;
 import tw.nolions.coffeebeanslife.MainActivity;
 import tw.nolions.coffeebeanslife.MainApplication;
 import tw.nolions.coffeebeanslife.R;
@@ -98,7 +97,7 @@ public class RecordFragment extends Fragment implements Toolbar.OnCreateContextM
     }
 
     @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+    public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
 
         MainApplication app = (MainApplication) getActivity().getApplication();

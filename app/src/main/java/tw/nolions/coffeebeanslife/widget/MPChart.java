@@ -173,9 +173,6 @@ public class MPChart implements OnChartValueSelectedListener {
     }
 
     public void refresh() {
-        Log.e("test", "trtest");
-
-
         xAxis.removeAllLimitLines();
         mXAixData = new ArrayList<>();
         mLineChart.clear();

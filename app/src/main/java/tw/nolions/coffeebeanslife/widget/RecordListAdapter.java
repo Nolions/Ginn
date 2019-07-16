@@ -119,7 +119,6 @@ public class RecordListAdapter extends BaseAdapter {
         }
 
         private void delete() {
-            Log.e("test", "test 11 :" + mPosition);
             final RecordEntity record = mRecordList.get(mPosition);
             new Thread(new Runnable() {
                 @Override

@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.Set;
 import java.util.UUID;
 
-import androidx.annotation.Nullable;
+import tw.nolions.coffeebeanslife.Const;
 
 public class BluetoothService extends Service {
     private Handler mHandler = new Handler();
@@ -41,16 +41,6 @@ public class BluetoothService extends Service {
     private String mDeviceAddress;
 
     // CONST
-    final private int STATE_NONE = 0;
-    final private int STATE_CONNECTING = 1;
-    final private int STATE_CONNECTED = 2;
-    final private int STATE_ERROR = -1;
-    final private int WHAT_STOP = 0;
-    final private int WHAT_CONNECTION = 1;
-    final private int WHAT_CONNECTED = 2;
-    final private int WHAT_READ = 3;
-    final private int WHAT_WRITE = 4;
-    final private int WHAT_ERROR = -1;
     final private UUID DEFAULT_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB");
 
     @Override
@@ -60,7 +50,6 @@ public class BluetoothService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Intent mIntent = intent;
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (mBluetoothAdapter != null) {
             setTag((String) intent.getExtras().get("TAG"));
@@ -79,7 +68,6 @@ public class BluetoothService extends Service {
         super.onDestroy();
     }
 
-    @Nullable
     @Override
     public IBinder onBind(Intent intent) {
         return mIBinder;
@@ -110,8 +98,8 @@ public class BluetoothService extends Service {
     public synchronized void connect(BluetoothDevice device) {
         Log.d(getTag(), "Connecting to: " + getDevcieName() + " - " + getDeviceAddress());
 
-        sendToTarget(WHAT_CONNECTION, "Connecting to: " + getDevcieName() + " - " + getDeviceAddress());
-        setState(STATE_CONNECTING);
+        sendToTarget(Const.BLUETOOTH_SERVICE_WHAT_CONNECTION, "Connecting to: " + getDevcieName() + " - " + getDeviceAddress());
+        setState(Const.BLUETOOTH_SERVICE_STATE_CONNECTING);
         mConnectThread = new ConnectThread(device);
         mConnectThread.start();
     }
@@ -190,8 +178,8 @@ public class BluetoothService extends Service {
         mConnectedThread = new ConnectedThread(socket);
         mConnectedThread.start();
 
-        sendToTarget(WHAT_CONNECTED, "Connected");
-        setState(STATE_CONNECTED);
+        sendToTarget(Const.BLUETOOTH_SERVICE_STATE_CONNECTED, "Connected");
+        setState(Const.BLUETOOTH_SERVICE_STATE_CONNECTED);
     }
 
     public synchronized void stop() {
@@ -199,23 +187,23 @@ public class BluetoothService extends Service {
 
         cancelConnectThread();
         cancelConnectedThread();
-        sendToTarget(WHAT_STOP, "Connection is stop");
-        setState(STATE_NONE);
+        sendToTarget(Const.BLUETOOTH_SERVICE_WHAT_STOP, "Connection is stop");
+        setState(Const.BLUETOOTH_SERVICE_STATE_NONE);
     }
 
     private void connectionFailed() {
         Log.e(getTag(), "Connection Failed");
 
-        sendToTarget(WHAT_ERROR, "Unable to connect");
-        setState(STATE_ERROR);
+        sendToTarget(Const.BLUETOOTH_SERVICE_WHAT_ERROR, "Unable to connect");
+        setState(Const.BLUETOOTH_SERVICE_STATE_ERROR);
         cancelConnectThread();
     }
 
     private void connectionLost() {
         Log.e(getTag(), "Connection Lost");
 
-        sendToTarget(WHAT_ERROR, "Connection was lost");
-        setState(STATE_ERROR);
+        sendToTarget(Const.BLUETOOTH_SERVICE_WHAT_ERROR, "Connection was lost");
+        setState(Const.BLUETOOTH_SERVICE_STATE_ERROR);
         cancelConnectedThread();
     }
 
@@ -251,7 +239,7 @@ public class BluetoothService extends Service {
         ConnectedThread r;
         // Synchronize a copy of the ConnectedThread
         synchronized (this) {
-            if (mState != STATE_CONNECTED) {
+            if (mState != Const.BLUETOOTH_SERVICE_STATE_CONNECTED) {
                 Log.e(getTag(), "Trying to send but not connected");
                 return;
             }
@@ -272,7 +260,7 @@ public class BluetoothService extends Service {
         private final BluetoothSocket mSocket;
         private final BluetoothDevice mDevice;
 
-        public ConnectThread(BluetoothDevice device) {
+        private ConnectThread(BluetoothDevice device) {
             BluetoothSocket tmp = null;
             mDevice = device;
 
@@ -316,7 +304,7 @@ public class BluetoothService extends Service {
             connected(mSocket, mDevice);
         }
 
-        public void cancel() {
+        private void cancel() {
             try {
                 mSocket.close();
             } catch (IOException e) {
@@ -330,7 +318,7 @@ public class BluetoothService extends Service {
         private final InputStream mInStream;
         private final OutputStream mOutStream;
 
-        public ConnectedThread(BluetoothSocket socket) {
+        private ConnectedThread(BluetoothSocket socket) {
             mSocket = socket;
             InputStream in = null;
             OutputStream out = null;
@@ -364,7 +352,7 @@ public class BluetoothService extends Service {
                             curMsg.delete(0, endIdx + end.length());
 
                             Log.d(getTag(), "Read Message:" + fullMessage);
-                            mHandler.obtainMessage(WHAT_READ, bytes, -1, fullMessage).sendToTarget();
+                            mHandler.obtainMessage(Const.BLUETOOTH_SERVICE_WHAT_READ, bytes, -1, fullMessage).sendToTarget();
                         }
                     }
                 } catch (IOException ioe) {
@@ -375,7 +363,7 @@ public class BluetoothService extends Service {
             }
         }
 
-        public void cancel() {
+        private void cancel() {
             try {
                 mSocket.close();
             } catch (IOException e) {
@@ -383,10 +371,10 @@ public class BluetoothService extends Service {
             }
         }
 
-        public void write(byte[] bytes) {
+        private void write(byte[] bytes) {
             try {
                 mOutStream.write(bytes);
-                mHandler.obtainMessage(WHAT_WRITE, -1, -1, bytes).sendToTarget();
+                mHandler.obtainMessage(Const.BLUETOOTH_SERVICE_WHAT_WRITE, -1, -1, bytes).sendToTarget();
             } catch (IOException e) {
                 Log.e(getTag(), "Exception during write", e);
             }
