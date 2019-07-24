@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data>
+        <variable
+            name="tempItemViewModel"
+            type="tw.nolions.coffeebeanslife.viewModel.TempItemViewModel" />
+    </data>
+
+
+    <android.support.constraint.ConstraintLayout
+        android:id="@+id/container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="52dp"
+            android:layout_marginTop="8dp"
+            android:text="@string/startTemp"
+            android:textSize="18sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+            android:id="@+id/textView2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="215dp"
+            android:layout_marginTop="10dp"
+            android:text="@string/temp"
+            android:textSize="18sp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_marginStart="260dp"
+            android:orientation="horizontal"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <Button
+                android:id="@+id/btn_less"
+                android:layout_width="0sp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="-"
+                android:onClick="@{() -> tempItemViewModel.onLessTempClick()}"/>
+
+            <EditText
+                android:id="@+id/edit_temp"
+                android:layout_width="15dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:inputType="number"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:text="@{tempItemViewModel.mTemp}"
+                android:textAlignment="center" />
+
+            <TextView
+                android:layout_width="15dp"
+                android:layout_height="wrap_content"
+                android:text="@string/tempUnit" />
+
+            <Button
+                android:id="@+id/btn_more"
+                android:layout_width="0sp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:text="+"
+                android:onClick="@{() -> tempItemViewModel.onAddTempClick()}"/>
+        </LinearLayout>
+
+
+    </android.support.constraint.ConstraintLayout>
+</layout>

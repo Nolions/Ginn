@@ -92,6 +92,7 @@
     <string name="appInfo">APP資訊</string>
     <string name="versionNameLabel">版本:</string>
 
+    <string name="startTemp">起始溫度</string>
     <string name="time">時間</string>
     <string name="temp">溫度</string>
 </resources>

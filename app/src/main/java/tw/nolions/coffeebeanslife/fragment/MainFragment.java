@@ -333,8 +333,6 @@ public class MainFragment extends Fragment implements
             @Override
             public void onCheckedChanged(CompoundButton buttonView, final boolean isChecked) {
                 if (mBluetoothService.getState() == Const.BLUETOOTH_SERVICE_STATE_CONNECTED) {
-                    // TODO
-                    Log.e("test", "testtesttest");
                     if (isChecked) {
                         mModel = "auto";
                         setAutoModeTempAlertView();
@@ -599,7 +597,6 @@ public class MainFragment extends Fragment implements
             }
 
 
-
 //                    mActivity.runOnUiThread(new Runnable() {
 //                        @Override
 //                        public void run() {
@@ -802,11 +799,12 @@ public class MainFragment extends Fragment implements
         mTempListView.setAdapter(mAutoTempAdapter);
 
         ArrayList<Temperature> temperatures = new ArrayList<>();
-        temperatures.add(new Temperature(100, 20));
-        temperatures.add(new Temperature(20, 30));
-        temperatures.add(new Temperature(200, 40));
-        temperatures.add(new Temperature(20, 50));
-        temperatures.add(new Temperature(250, 300));
+
+        temperatures.add(new Temperature(0, 0)); // 自動啟始時間&溫度
+        for (int i = 1; i <= 5; i++) {
+            int timeUnit = 15 * 60 / 5;
+            temperatures.add(new Temperature(100, timeUnit * i));
+        }
         mAutoTempAdapter.setData(temperatures);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(mActivity);
@@ -821,12 +819,14 @@ public class MainFragment extends Fragment implements
                 map.put("action", "jobs");
 
                 try {
+                    ArrayList<Temperature> mTemperatureList = mAutoTempAdapter.getData();
                     mAutoTempJobs = new HashMap<>();
                     int firstSec = 0;
-                    int firstTemp = 0;
+                    int firstTemp = (int) mTemperatureList.get(0).getTemp();
                     int addSec = 0;
-                    for (int i = 0; i < mAutoTempAdapter.getData().size(); i++) {
-                        Temperature t = mAutoTempAdapter.getData().get(i);
+                    for (int i = 1; i < mTemperatureList.size(); i++) {
+                        Temperature t = mTemperatureList.get(i);
+
                         map.put("sec", t.getSeconds());
                         map.put("temp", t.getTemp());
                         int timeDiff = t.getSeconds() - firstSec;
@@ -872,6 +872,7 @@ public class MainFragment extends Fragment implements
      * @param jsonObject 欲傳送的資料內容
      */
     private void bluetoothWrite(final JSONObject jsonObject) {
+        Log.e("test", "test:" + jsonObject.toString());
         mBluetoothService.write(jsonObject.toString().getBytes());
     }
 
