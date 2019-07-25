@@ -1,4 +1,4 @@
-package tw.nolions.coffeebeanslife.service.Service;
+package tw.nolions.coffeebeanslife.service.service;
 
 
 import android.app.Service;
@@ -246,7 +246,6 @@ public class BluetoothService extends Service {
             r = mConnectedThread;
         }
 
-        // Perform the write unsynchronized
         r.write(data);
     }
 

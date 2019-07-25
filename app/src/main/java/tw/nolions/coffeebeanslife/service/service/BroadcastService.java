@@ -1,4 +1,4 @@
-package tw.nolions.coffeebeanslife.service.Service;
+package tw.nolions.coffeebeanslife.service.service;
 
 import android.app.Service;
 import android.content.Intent;
