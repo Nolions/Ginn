@@ -110,7 +110,7 @@ public class MainFragment extends Fragment implements
     private String mBeanTemp = "0";
     private String mStoveTemp = "0";
     private Boolean mActionStart = false;
-    private String mModel;
+    private String mModel = "manual";
     private int mScreenHeight;
     private int mScreenWidth;
 
@@ -134,6 +134,8 @@ public class MainFragment extends Fragment implements
     private int mInBean = 0;
     private int mAutoModeRunTimeSec = 0;
     private boolean mIsInBean = false;
+    private boolean mIsFirstCrack = false;
+    private boolean mIsSecondCrack = false;
 
     private final int AUTO_MODEL_TIME_RANGE = 2;
     private HashMap<Integer, Integer> mAutoTempJobs;
@@ -212,8 +214,6 @@ public class MainFragment extends Fragment implements
         mActivity = this.getActivity();
         mAPP = (MainApplication) mActivity.getApplication();
 
-        mModel = "m";
-
         mDeviceListAdapter = new BluetoothDeviceAdapter(this.mContext);
         mAutoTempAdapter = new AutoTempAdapter(this.mContext, mAPP);
         mTempRecord = new HashMap<>();
@@ -275,7 +275,6 @@ public class MainFragment extends Fragment implements
         mActivity.startService(bluetoothServiceIntent);
         mActivity.bindService(new Intent(mActivity, BluetoothService.class), mConnection, Context.BIND_AUTO_CREATE);
 
-        // TODO
         // BroadcastService
         Intent broadcastServiceIntent = new Intent(mActivity.getBaseContext(), BroadcastService.class);
         mActivity.startService(broadcastServiceIntent);
@@ -310,7 +309,6 @@ public class MainFragment extends Fragment implements
                 R.string.navigation_drawer_close,
                 R.string.navigation_drawer_open
         );
-//        mDrawerLayout.setDrawerListener(mDrawerToggle);
 
         mDrawerLayout.addDrawerListener(toggle);
         toggle.syncState();
@@ -437,6 +435,7 @@ public class MainFragment extends Fragment implements
         switch (item.getItemId()) {
             case R.id.nav_On:
                 if (mBluetoothService.getState() == 2) {
+                    // TODO
                     Thread t = new Thread(new Runnable() {
                         @Override
                         public void run() {
@@ -454,7 +453,6 @@ public class MainFragment extends Fragment implements
                             });
                         }
                     });
-
                     t.start();
                 } else if (mBluetoothService.getBluetoothDevice() == null) {
                     alert(getString(R.string.no_device_connection));
@@ -470,6 +468,10 @@ public class MainFragment extends Fragment implements
                 transaction.commit();
                 break;
             case R.id.nav_Clear:
+                mIsFirstCrack = false;
+                mIsSecondCrack = false;
+                mChart.refresh();
+                mMainViewModel.refresh();
                 break;
             case R.id.nav_stopConnect:
                 if (getActionStart()) {
@@ -495,6 +497,12 @@ public class MainFragment extends Fragment implements
 
         mDrawerLayout.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    private void initTimeInfo() {
+        mFirstCrackTime = 0;
+        mSecondCrackTime = 0;
+        mRunTime = 0;
     }
 
     private void insertRecord() {
@@ -548,11 +556,12 @@ public class MainFragment extends Fragment implements
     @Override
     public void firstCrack() {
         mMainViewModel.setIsFirstCrack(true);
-        if (System.currentTimeMillis() / 1000 - mStartTime != 0) {
-            mFirstCrackStartTime = (int) System.currentTimeMillis() / 1000;
-            Log.e("test", "mFirstCrackStartTime:" + mFirstCrackStartTime);
+//        if (System.currentTimeMillis() / 1000 - mStartTime != 0) {
+//            mFirstCrackStartTime = (int) System.currentTimeMillis() / 1000;
             mFirstCrack = mTempRecord.size();
-        }
+//        }
+        mFirstCrackStartTime = (int) System.currentTimeMillis() / 1000;
+        mIsFirstCrack = true;
         mChart.addXAxisLimitLine(getString(R.string.first_crack));
     }
 
@@ -561,13 +570,11 @@ public class MainFragment extends Fragment implements
         mMainViewModel.setIsSecondCrack(true);
         if (System.currentTimeMillis() / 1000 - mStartTime != 0) {
             mSecondCrackStartTime = (int) System.currentTimeMillis() / 1000;
-//            mMainViewModel.setSecondCrackTime(sec);
-//            mChart.addEntry(Float.parseFloat(mBeanTemp), Float.parseFloat(mStoveTemp), sec);
             mSecondCrack = mTempRecord.size();
         }
+        mSecondCrackTime = 0;
+        mIsSecondCrack = true;
         mChart.addXAxisLimitLine(getString(R.string.second_crack));
-
-
     }
 
     @Override
@@ -582,11 +589,9 @@ public class MainFragment extends Fragment implements
                 inBeansAction();
             } else {
                 outBeansAction();
+                initTimeInfo();
             }
 
-//            Thread t = new Thread(new Runnable() {
-//                @Override
-//                public void run() {
             if (!action) {
                 Log.e("test", "test test");
                 HashMap<String, Object> map = new HashMap<>();
@@ -596,11 +601,6 @@ public class MainFragment extends Fragment implements
                 mBroadcastService.stop();
             }
 
-
-//                    mActivity.runOnUiThread(new Runnable() {
-//                        @Override
-//                        public void run() {
-            Log.e("test", "test");
             String msg = getString(R.string.exit_beans);
             if (action) {
                 mChart.refresh();
@@ -620,25 +620,14 @@ public class MainFragment extends Fragment implements
                 }
 
             } else {
-                HashMap<String, Object> map = new HashMap<>();
-
                 setActionStart(false);
                 mMainViewModel.setIsFirstCrack(false);
                 mMainViewModel.setIsSecondCrack(false);
-//                                        setActionStart(false);
                 mFirstCrack = 0;
                 mSecondCrack = 0;
                 mInBean = 0;
-                mChart.refresh();
-                mMainViewModel.refresh();
             }
             alert(msg);
-//                        }
-//                    });
-//                }
-//            });
-
-//            t.start();
         } else if (mBluetoothService.getBluetoothDevice() == null) {
             Log.e(mAPP.TAG(), "MainFragment::actionBean(), " + getString(R.string.no_device_connection));
             alert(getString(R.string.no_device_connection));
@@ -677,23 +666,15 @@ public class MainFragment extends Fragment implements
                 mRunTime = (int) System.currentTimeMillis() / 1000 - mStartTime;
             }
 
-            if ((System.currentTimeMillis() / 1000 - mSecondCrackStartTime) > 0) {
+            if ((System.currentTimeMillis() / 1000 - mSecondCrackStartTime) != 0) {
                 mSecondCrackTime = (int) System.currentTimeMillis() / 1000 - mSecondCrackStartTime;
             }
 
-            if ((System.currentTimeMillis() / 1000) - mFirstCrackStartTime > 0) {
+            if ((System.currentTimeMillis() / 1000) - mFirstCrackStartTime != 0) {
                 mFirstCrackTime = (int) System.currentTimeMillis() / 1000 - mFirstCrackStartTime;
             }
 
-
             if (this.getActionStart()) {
-
-                String mNowTemp = mStoveTemp;
-//                if (mModel.equals("a")) {
-//                    mNowTemp = mBeanTemp;
-//                }
-
-                Temperature model = new Temperature(Float.parseFloat(mNowTemp), mRunTime);
                 mChart.addEntry(
                         Float.parseFloat(mBeanTemp),
                         Float.parseFloat(mStoveTemp),
@@ -703,8 +684,12 @@ public class MainFragment extends Fragment implements
                 if (mIsInBean) {
                     mTempRecord.put(mRunTime, jsonObject);
                     mMainViewModel.setRunTime(mRunTime);
-                    mMainViewModel.setFirstCrackTime(mFirstCrackTime);
-                    mMainViewModel.setSecondCrackTime(mSecondCrackTime);
+                    if (mIsFirstCrack) {
+                        mMainViewModel.setFirstCrackTime(mFirstCrackTime);
+                    }
+                    if (mIsSecondCrack) {
+                        mMainViewModel.setSecondCrackTime(mSecondCrackTime);
+                    }
                 }
             }
         } catch (JSONException e) {
@@ -725,6 +710,7 @@ public class MainFragment extends Fragment implements
                         mDeviceListAdapter.notifyDataSetChanged();
                     }
                     break;
+                default:
             }
         }
     };
@@ -765,7 +751,6 @@ public class MainFragment extends Fragment implements
             mBluetoothService.setBluetoothDevice(device);
             mIsBound = true;
 
-            // TODO move to handle
             mDeviceConnectionDialog.dismiss();
             mToolBar.setTitle(mContext.getString(R.string.app_name) + " " + device.getName() + " 連線中...");
         }
