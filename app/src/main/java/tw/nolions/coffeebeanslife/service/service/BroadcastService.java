@@ -69,7 +69,9 @@ public class BroadcastService extends Service {
     }
 
     public void stop() {
-        cdt.cancel();
+        if (cdt != null) {
+            cdt.cancel();
+        }
     }
 
     public void setTimeSec(int sec) {
