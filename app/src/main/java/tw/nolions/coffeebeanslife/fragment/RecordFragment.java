@@ -2,6 +2,7 @@ package tw.nolions.coffeebeanslife.fragment;
 
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -34,9 +35,7 @@ import tw.nolions.coffeebeanslife.service.asyncTask.ExportToCSVAsyncTask;
 import tw.nolions.coffeebeanslife.widget.MPChart;
 
 public class RecordFragment extends Fragment implements Toolbar.OnCreateContextMenuListener {
-//    private String[] mNames;
     private View mView;
-    private FragmentRecordBinding mBind;
     private int mRecordID;
     private MPChart mChart;
 
@@ -51,7 +50,25 @@ public class RecordFragment extends Fragment implements Toolbar.OnCreateContextM
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        init();
+    }
+
+    @Override
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        FragmentRecordBinding mBind = DataBindingUtil.inflate(
+                inflater,
+                R.layout.fragment_record,
+                container,
+                false);
+        mView = mBind.getRoot();
+
+        initView();
+
+        return mView;
+    }
+
+    @Override
+    public void onActivityCreated(Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
     }
 
     @Override
@@ -59,8 +76,17 @@ public class RecordFragment extends Fragment implements Toolbar.OnCreateContextM
         super.onStart();
 
         Bundle arguments = getArguments();
-        mRecordID = arguments.getInt("recordID");
+        if (arguments != null) {
+            mRecordID = arguments.getInt("recordID");
+        }
 
+        if (getActivity() != null) {
+            MainApplication app = (MainApplication) getActivity().getApplication();
+            mRecordDao = app.appDatabase().getRecordDao();
+
+            initMPChart();
+            setData();
+        }
 //        mNames = new String[]{
 //                getString(R.string.temp_stove),
 //                getString(R.string.temp_beans)
@@ -83,31 +109,6 @@ public class RecordFragment extends Fragment implements Toolbar.OnCreateContextM
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        mBind = DataBindingUtil.inflate(
-                inflater,
-                R.layout.fragment_record,
-                container,
-                false);
-        mView = mBind.getRoot();
-
-        initView();
-
-        return mView;
-    }
-
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-
-        MainApplication app = (MainApplication) getActivity().getApplication();
-        mRecordDao = app.appDatabase().getRecordDao();
-
-        initMPChart();
-        setData();
-    }
-
-    @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         menu.clear();
         inflater.inflate(R.menu.record_toolbar_menu, menu);
@@ -115,28 +116,28 @@ public class RecordFragment extends Fragment implements Toolbar.OnCreateContextM
 
     @Override
     public boolean onOptionsItemSelected(MenuItem menuItem) {
-        switch (menuItem.getItemId()) {
-            case R.id.export_item:
-                Gson gson = new Gson();
-                Type type = new TypeToken<HashMap<Integer, JSONObject>>() {
-                }.getType();
-                HashMap<Integer, JSONObject> mTempRecord = gson.fromJson(mRecord.record, type);
+        if (menuItem.getItemId() == R.id.export_item) {
+            Gson gson = new Gson();
+            Type type = new TypeToken<HashMap<Integer, JSONObject>>() {
+            }.getType();
+            HashMap<Integer, JSONObject> mTempRecord = gson.fromJson(mRecord.record, type);
 
+            if ( getActivity() != null) {
                 MainApplication mAPP = (MainApplication) getActivity().getApplication();
 
                 mChart.saveToImage(mRecord.name);
                 new ExportToCSVAsyncTask(getContext(), mAPP, mRecord.name).execute(mTempRecord);
-                break;
+            }
         }
         return true;
     }
 
-    private void init() {
-
-    }
-
     private void initView() {
         Toolbar toolbar = (Toolbar) mView.findViewById(R.id.record_toolbar);
+        if (getActivity() == null) {
+            return ;
+        }
+
         ((MainActivity) getActivity()).setSupportActionBar(toolbar);
         ((MainActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         ((MainActivity) getActivity()).getSupportActionBar().setDisplayShowHomeEnabled(true);
@@ -145,7 +146,9 @@ public class RecordFragment extends Fragment implements Toolbar.OnCreateContextM
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                getFragmentManager().popBackStack();
+                if (getFragmentManager() != null) {
+                    getFragmentManager().popBackStack();
+                }
             }
         });
     }
@@ -157,12 +160,14 @@ public class RecordFragment extends Fragment implements Toolbar.OnCreateContextM
             public void run() {
                 mRecord = mRecordDao.find(mRecordID);
 
-                getActivity().runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        setChart(mRecord);
-                    }
-                });
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            setChart(mRecord);
+                        }
+                    });
+                }
             }
         }).start();
     }
@@ -183,6 +188,7 @@ public class RecordFragment extends Fragment implements Toolbar.OnCreateContextM
         Type type = new TypeToken<HashMap<Integer, JSONObject>>() {
 
         }.getType();
+
         HashMap<Integer, JSONObject> mTempRecord = gson.fromJson(record.record, type);
 
         Map<Integer, JSONObject> param = new TreeMap<>(mTempRecord);
@@ -190,11 +196,13 @@ public class RecordFragment extends Fragment implements Toolbar.OnCreateContextM
         for (Integer key : param.keySet()) {
             JSONObject jsonObject = param.get(key);
             try {
-                mChart.addEntry(
-                        Float.parseFloat(jsonObject.getString("b")),
-                        Float.parseFloat(jsonObject.getString("s")),
-                        key
-                );
+                if (jsonObject != null) {
+                    mChart.addEntry(
+                            Float.parseFloat(jsonObject.getString("b")),
+                            Float.parseFloat(jsonObject.getString("s")),
+                            key
+                    );
+                }
             } catch (JSONException e) {
                 Log.e(getTag(), "RecordFragment::setChart(), JSONException error: " + e.getMessage());
             }
