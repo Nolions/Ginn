@@ -7,6 +7,7 @@ import android.os.CountDownTimer;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
+import android.util.ArrayMap;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -82,7 +83,7 @@ public class BroadcastService extends Service {
         timeRange = range;
     }
 
-    public void setTempMap(HashMap<Integer, Integer> map) {
+    public void setTempMap(ArrayMap<Integer, Integer> map) {
         mTempList = new ArrayList<>();
         Map<Integer, Integer> param = new TreeMap<>(map);
         for (Integer key : param.keySet()) {

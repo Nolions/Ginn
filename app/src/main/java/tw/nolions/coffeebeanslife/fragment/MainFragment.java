@@ -29,6 +29,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.widget.SwitchCompat;
 import android.support.v7.widget.Toolbar;
+import android.util.ArrayMap;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -106,7 +107,7 @@ public class MainFragment extends Fragment implements
     private int mFirstCrackTime = 0;
     private int mSecondCrackStartTime = 0;
     private int mSecondCrackTime = 0;
-    private HashMap<Integer, JSONObject> mTempRecord;
+    private ArrayMap<Integer, JSONObject> mTempRecord;
     private String mBeanTemp = "0";
     private String mStoveTemp = "0";
     private Boolean mActionStart = false;
@@ -138,7 +139,7 @@ public class MainFragment extends Fragment implements
     private boolean mIsSecondCrack = false;
 
     private final int AUTO_MODEL_TIME_RANGE = 2;
-    private HashMap<Integer, Integer> mAutoTempJobs;
+    private ArrayMap<Integer, Integer> mAutoTempJobs;
 
     private SlopeTemperature mSlopeTemperature;
 
@@ -212,11 +213,14 @@ public class MainFragment extends Fragment implements
     private void init() {
         mContext = this.getContext();
         mActivity = this.getActivity();
-        mAPP = (MainApplication) mActivity.getApplication();
+
+        if (mActivity != null) {
+            mAPP = (MainApplication) mActivity.getApplication();
+        }
 
         mDeviceListAdapter = new BluetoothDeviceAdapter(this.mContext);
         mAutoTempAdapter = new AutoTempAdapter(this.mContext, mAPP);
-        mTempRecord = new HashMap<>();
+        mTempRecord = new ArrayMap<>();
 
         mRecordListFragment = new RecordListFragment();
 
@@ -253,7 +257,7 @@ public class MainFragment extends Fragment implements
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         mBinding = DataBindingUtil.inflate(inflater, R.layout.fragment_main, container, false);
         mView = mBinding.getRoot();
 
@@ -293,17 +297,17 @@ public class MainFragment extends Fragment implements
     }
 
     private void initLineChart() {
-        mLineChart = (LineChart) mView.findViewById(R.id.lineChart);
+        mLineChart = mView.findViewById(R.id.lineChart);
     }
 
     private void initToolbar() {
-        mToolBar = (Toolbar) mView.findViewById(R.id.toolbar);
+        mToolBar = mView.findViewById(R.id.toolbar);
         ((MainActivity) mActivity).setSupportActionBar(mToolBar);
         setHasOptionsMenu(true);
 
-        mDrawerLayout = (DrawerLayout) mView.findViewById(R.id.drawer_layout);
+        mDrawerLayout = mView.findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                (MainActivity) mActivity,
+                mActivity,
                 mDrawerLayout,
                 mToolBar,
                 R.string.navigation_drawer_close,
@@ -314,9 +318,8 @@ public class MainFragment extends Fragment implements
         toggle.syncState();
     }
 
-
     public void initNavigationView() {
-        NavigationView navigationView = (NavigationView) mView.findViewById(R.id.nav_view);
+        NavigationView navigationView = mView.findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
         Menu menu = navigationView.getMenu();
@@ -331,12 +334,17 @@ public class MainFragment extends Fragment implements
             @Override
             public void onCheckedChanged(CompoundButton buttonView, final boolean isChecked) {
                 if (mBluetoothService.getState() == Const.BLUETOOTH_SERVICE_STATE_CONNECTED) {
+                    HashMap<String, Object> map = new HashMap<>();
+                    map.put("action", "model");
                     if (isChecked) {
                         mModel = "auto";
+                        map.put("auto", true);
                         setAutoModeTempAlertView();
                     } else {
                         mModel = "manual";
+                        map.put("auto", false);
                     }
+                    bluetoothWrite(new JSONObject(map));
                 } else if (mBluetoothService.getBluetoothDevice() == null) {
                     Log.e(mAPP.TAG(), "MainFragment::modelDrawerSwitch::onCheckedChanged()" + getString(R.string.no_device_connection));
                     alert(getString(R.string.no_device_connection));
@@ -388,43 +396,42 @@ public class MainFragment extends Fragment implements
 
     @Override
     public boolean onOptionsItemSelected(MenuItem menuItem) {
-        switch (menuItem.getItemId()) {
-            case R.id.action_conn:
-                if (!mBluetoothService.isSupport()) {
-                    alert(getString(R.string.no_support_bluetooth));
-                    return false;
-                } else if (!mBluetoothService.isEnable()) {
-                    alert(getString(R.string.no_enable_bluetooth));
-                    return false;
+
+        if (menuItem.getItemId() == R.id.action_conn) {
+            if (!mBluetoothService.isSupport()) {
+                alert(getString(R.string.no_support_bluetooth));
+                return false;
+            } else if (!mBluetoothService.isEnable()) {
+                alert(getString(R.string.no_enable_bluetooth));
+                return false;
+            }
+            getPairedDevices();
+            View view = View.inflate(getContext(), R.layout.fragment_device_list, null);
+            ListView mDeviceListView = view.findViewById(R.id.device_ListView);
+            mDeviceListView.setAdapter(mDeviceListAdapter);
+
+            mDeviceListView.setOnItemClickListener(listener);
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(mActivity);
+            builder.setIcon(R.drawable.ic_bluetooth_black);
+            builder.setTitle(R.string.selectBluetoothDevice);
+            builder.setCancelable(false);
+
+            builder.setPositiveButton(R.string.cancel, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.cancel();
                 }
-                getPairedDevices();
-                View view = getLayoutInflater().inflate(R.layout.fragment_device_list, null);
-                ListView mDeviceListView = (ListView) view.findViewById(R.id.device_ListView);
-                mDeviceListView.setAdapter(mDeviceListAdapter);
-
-                mDeviceListView.setOnItemClickListener(listener);
-
-                AlertDialog.Builder builder = new AlertDialog.Builder(mActivity);
-                builder.setIcon(R.drawable.ic_bluetooth_black);
-                builder.setTitle(R.string.selectBluetoothDevice);
-                builder.setCancelable(false);
-
-                builder.setPositiveButton(R.string.cancel, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.cancel();
-                    }
-                });
-                builder.setNeutralButton(R.string.search, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        getPairedDevices();
-                    }
-                });
-                builder.setView(view);
-                mAlertDialog = builder.create();
-                mAlertDialog.show();
-                break;
+            });
+            builder.setNeutralButton(R.string.search, new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    getPairedDevices();
+                }
+            });
+            builder.setView(view);
+            mAlertDialog = builder.create();
+            mAlertDialog.show();
         }
 
         return true;
@@ -461,11 +468,14 @@ public class MainFragment extends Fragment implements
                 }
                 break;
             case R.id.nav_record:
-                FragmentManager fm = ((MainActivity) this.getActivity()).getSupportFragmentManager();
-                FragmentTransaction transaction = fm.beginTransaction();
-                transaction.addToBackStack(mRecordListFragment.getClass().getName());
-                transaction.replace(R.id.container, mRecordListFragment);
-                transaction.commit();
+                if (getActivity() != null) {
+                    FragmentManager fm = (getActivity()).getSupportFragmentManager();
+                    FragmentTransaction transaction = fm.beginTransaction();
+                    transaction.addToBackStack(mRecordListFragment.getClass().getName());
+                    transaction.replace(R.id.container, mRecordListFragment);
+                    transaction.commit();
+                }
+
                 break;
             case R.id.nav_Clear:
                 mIsFirstCrack = false;
@@ -558,7 +568,7 @@ public class MainFragment extends Fragment implements
         mMainViewModel.setIsFirstCrack(true);
 //        if (System.currentTimeMillis() / 1000 - mStartTime != 0) {
 //            mFirstCrackStartTime = (int) System.currentTimeMillis() / 1000;
-            mFirstCrack = mTempRecord.size();
+        mFirstCrack = mTempRecord.size();
 //        }
         mFirstCrackStartTime = (int) System.currentTimeMillis() / 1000;
         mIsFirstCrack = true;
@@ -593,7 +603,6 @@ public class MainFragment extends Fragment implements
             }
 
             if (!action) {
-                Log.e("test", "test test");
                 HashMap<String, Object> map = new HashMap<>();
                 map.put("action", "status");
                 map.put("start", false);
@@ -700,17 +709,16 @@ public class MainFragment extends Fragment implements
     private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            String action = intent.getAction();
-            switch (action) {
-                case BluetoothDevice.ACTION_FOUND: //收到bluetooth狀態改變
+            //收到bluetooth狀態改變
+            if (intent.getAction() != null) {
+                if (intent.getAction().equals(BluetoothDevice.ACTION_FOUND)) {
                     BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
                     if (device.getBondState() != BluetoothDevice.BOND_BONDED) {
 
                         mDeviceListAdapter.addItem(BluetoothDeviceAdapter.NoPAIRED_ITEM_TYPE, device);
                         mDeviceListAdapter.notifyDataSetChanged();
                     }
-                    break;
-                default:
+                }
             }
         }
     };
@@ -779,8 +787,8 @@ public class MainFragment extends Fragment implements
     }
 
     private void setAutoModeTempAlertView() {
-        View view = getLayoutInflater().inflate(R.layout.temp_list, null);
-        ListView mTempListView = (ListView) view.findViewById(R.id.temp_ListView);
+        View view = View.inflate(getContext(), R.layout.temp_list, null);
+        ListView mTempListView = view.findViewById(R.id.temp_ListView);
         mTempListView.setAdapter(mAutoTempAdapter);
 
         ArrayList<Temperature> temperatures = new ArrayList<>();
@@ -800,20 +808,15 @@ public class MainFragment extends Fragment implements
         builder.setPositiveButton(R.string.ok, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                HashMap<String, Object> map = new HashMap<>();
-                map.put("action", "jobs");
-
                 try {
                     ArrayList<Temperature> mTemperatureList = mAutoTempAdapter.getData();
-                    mAutoTempJobs = new HashMap<>();
+                    mAutoTempJobs = new ArrayMap<>();
                     int firstSec = 0;
                     int firstTemp = (int) mTemperatureList.get(0).getTemp();
                     int addSec = 0;
                     for (int i = 1; i < mTemperatureList.size(); i++) {
                         Temperature t = mTemperatureList.get(i);
 
-                        map.put("sec", t.getSeconds());
-                        map.put("temp", t.getTemp());
                         int timeDiff = t.getSeconds() - firstSec;
                         int tempDiff = (int) t.getTemp() - firstTemp;
                         float slope = mSlopeTemperature.slope(timeDiff, tempDiff);
@@ -847,8 +850,10 @@ public class MainFragment extends Fragment implements
         builder.setView(view);
         mAlertDialog = builder.create();
         mAlertDialog.show();
-        mAlertDialog.getWindow().setLayout(mScreenWidth / 10 * 9, mScreenHeight / 10 * 9);
-        mAlertDialog.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
+        if (mAlertDialog.getWindow() != null) {
+            mAlertDialog.getWindow().setLayout(mScreenWidth / 10 * 9, mScreenHeight / 10 * 9);
+            mAlertDialog.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
+        }
     }
 
     /**
